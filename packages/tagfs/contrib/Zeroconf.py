@@ -670,7 +670,7 @@ class DNSOutgoing(object):
     def writeInt(self, value):
         """Writes an unsigned integer to the packet"""
         format = '!I'
-        self.data.append(struct.pack(format, value))
+        self.data.append(struct.pack(format, int(value)))
         self.size += 4
 
     def writeString(self, value, length):
@@ -1233,14 +1233,11 @@ class Zeroconf(object):
 
     Supports registration, unregistration, queries and browsing.
     """
-    def __init__(self, bindaddress=None):
+    def __init__(self, bindaddress):
         """Creates an instance of the Zeroconf class, establishing
         multicast communications, listening and reaping threads."""
         globals()['_GLOBAL_DONE'] = 0
-        if bindaddress is None:
-            self.intf = socket.gethostbyname(socket.gethostname())
-        else:
-            self.intf = bindaddress
+        self.bindaddress = bindaddress
         self.group = ('', _MDNS_PORT)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
@@ -1266,8 +1263,8 @@ class Zeroconf(object):
             # the SO_REUSE* options have been set, so ignore it
             #
             pass
-        self.socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.intf) + socket.inet_aton('0.0.0.0'))
-        self.socket.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(_MDNS_ADDR) + socket.inet_aton('0.0.0.0'))
+        self.socket.setsockopt(socket.SOL_IP, socket.IP_MULTICAST_IF, socket.inet_aton(self.bindaddress) + socket.inet_aton('0.0.0.0'))
+        self.socket.setsockopt(socket.SOL_IP, socket.IP_ADD_MEMBERSHIP, socket.inet_aton(_MDNS_ADDR) + socket.inet_aton(self.bindaddress))
 
         self.listeners = []
         self.browsers = []
@@ -1282,10 +1279,10 @@ class Zeroconf(object):
         self.reaper = Reaper(self)
 
     def isLoopback(self):
-        return self.intf.startswith("127.0.0.1")
+        return self.bindaddress.startswith("127.0.0.1")
 
     def isLinklocal(self):
-        return self.intf.startswith("169.254.")
+        return self.bindaddress.startswith("169.254.")
 
     def wait(self, timeout):
         """Calling thread waits for a given number of milliseconds or
@@ -1530,28 +1527,5 @@ class Zeroconf(object):
             self.notifyAll()
             self.engine.notify()
             self.unregisterAllServices()
-            self.socket.setsockopt(socket.SOL_IP, socket.IP_DROP_MEMBERSHIP, socket.inet_aton(_MDNS_ADDR) + socket.inet_aton('0.0.0.0'))
+            self.socket.setsockopt(socket.SOL_IP, socket.IP_DROP_MEMBERSHIP, socket.inet_aton(_MDNS_ADDR) + socket.inet_aton(self.bindaddress))
             self.socket.close()
-            
-# Test a few module features, including service registration, service
-# query (for Zoe), and service unregistration.
-
-if __name__ == '__main__':    
-    print "Multicast DNS Service Discovery for Python, version", __version__
-    r = Zeroconf()
-    print "1. Testing registration of a service..."
-    desc = {'version':'0.10','a':'test value', 'b':'another value'}
-    info = ServiceInfo("_http._tcp.local.", "My Service Name._http._tcp.local.", socket.inet_aton("127.0.0.1"), 1234, 0, 0, desc)
-    print "   Registering service..."
-    r.registerService(info)
-    print "   Registration done."
-    print "2. Testing query of service information..."
-    print "   Getting ZOE service:", str(r.getServiceInfo("_http._tcp.local.", "ZOE._http._tcp.local."))
-    print "   Query done."
-    print "3. Testing query of own service..."
-    print "   Getting self:", str(r.getServiceInfo("_http._tcp.local.", "My Service Name._http._tcp.local."))
-    print "   Query done."
-    print "4. Testing unregister of service information..."
-    r.unregisterService(info)
-    print "   Unregister done."
-    r.close()
