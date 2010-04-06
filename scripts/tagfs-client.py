@@ -7,7 +7,6 @@ Script para ejecutar un client TagFS desde la línea de comandos.
 
 import os
 import sys
-import time
 import optparse
 
 # Add to the Python path the directory containing the packages in the source distribution. 
@@ -15,7 +14,7 @@ PACKAGES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir
 sys.path.insert(0, PACKAGES_DIR)
 
 from tagfs import  __version__, __authors__
-from tagfs.client import TagFSClient
+from tagfs.client.cli import CLITagFSClient
 
 
 EXIT_SUCCESS, EXIT_FAILURE = 0, 1
@@ -61,22 +60,10 @@ def main(argv):
     @return: Retorna 0 si no ocurrió ningún error durante la ejecución 
         del programa y 1 en el caso contrario.
     """
-    options, args = _parse_args(argv)
-    try:
-        client = TagFSClient(options.address)
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            client.terminate()
-    except Exception, error:
-        # Print error messages here!
-        print error
-        return EXIT_FAILURE
-    else:
-        return EXIT_SUCCESS
+    options, args = _parse_args(argv)   
+    client = CLITagFSClient(options.address)
+    client.start()
+    return EXIT_SUCCESS
 
 
 if __name__ == '__main__':

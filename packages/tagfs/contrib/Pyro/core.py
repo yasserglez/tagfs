@@ -11,7 +11,7 @@
 import sys, time, re, os, weakref
 import imp, marshal, new, socket
 from pickle import PicklingError
-import Pyro.constants, Pyro.util, Pyro.protocol, Pyro.errors
+import Pyro.constants, Pyro.util, Pyro.protocol, Pyro.errors, Pyro.core
 from Pyro.errors import *
 from types import UnboundMethodType, MethodType, BuiltinMethodType, TupleType, StringType, UnicodeType
 if Pyro.util.supports_multithreading():

@@ -43,10 +43,6 @@ def _parse_args(argv):
     parser.add_option('-i', '--ip', action='store', dest='address', type='string', metavar='IP',
                       help='the IP address of the interface where the TagFS server ' \
                            'should listen for incoming connections')
-    parser.add_option('-p', '--port', action='store', dest='port', type='int', metavar='PORT',
-                      help='the port where the TagFS server should listen ' \
-                           'for incoming connections (default: %default)') 
-    parser.set_default('port', '7000')
     options, args = parser.parse_args(args=argv[1:])
     if not options.address:
         parser.error('missing required --ip option')
@@ -65,14 +61,9 @@ def main(argv):
         del programa y 1 en el caso contrario.
     """
     options, args = _parse_args(argv)
-    try:
-        server = TagFSServer(options.address, options.port)
-        server.start()
-    except Exception, error:
-        # Print error messages here!
-        return EXIT_FAILURE
-    else:
-        return EXIT_SUCCESS
+    server = TagFSServer(options.address)
+    server.start()
+    return EXIT_SUCCESS
 
 
 if __name__ == '__main__':

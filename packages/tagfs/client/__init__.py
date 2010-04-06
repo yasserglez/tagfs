@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
 """
-Implementación del servidor de TagFS.
+Implementación de la clase base de los clientes TagFS.
 """
 
 import threading
 
 from tagfs.common import ZEROCONF_SERVICE_TYPE
 from tagfs.contrib.Zeroconf import Zeroconf, ServiceBrowser
+from tagfs.contrib.Pyro import core
 
 
 class TagFSClient(object):
     """
-    Cliente de TagFS.
+    Clase base de los clientes de TagFS.
     """
     
     def __init__(self, address):
@@ -35,6 +36,7 @@ class TagFSClient(object):
         """
         Inicializa el descubrimiento automático de los servidores.
         """
+        self._servers = {}
         self._servers_mutex = threading.Lock()                
         self.addService = self.server_added
         self.removeService = self.server_removed
@@ -65,7 +67,9 @@ class TagFSClient(object):
             del servicio que fue descubierto.
         """
         with self._servers_mutex:
-            print service_name, 'added'
+            pyro_uri = service_name[:-(len(service_type) + 1)]
+            pyro_proxy = core.getProxyForURI(pyro_uri)
+            self._servers[pyro_uri] = pyro_proxy
         
     def server_removed(self, zeroconf, service_type, service_name):
         """
@@ -73,7 +77,16 @@ class TagFSClient(object):
         
         @type zeroconf: C{Zeroconf}
         @param zeroconf: Instancia del servidor implementando la comunicación
-            mediante Zeroconf Multicast DNS Service Discovery.        
+            mediante Zeroconf Multicast DNS Service Discovery.
+            
+        @type service_type: C{str}
+        @param service_type: Nombre completamente calificado del tipo
+            de servicio que fue descubierto.
+        
+        @type service_name: C{str}
+        @param service_name: Nombre completamente calificado del nombre 
+            del servicio que fue descubierto.                    
         """
         with self._servers_mutex:
-            print service_name, 'removed'
+            pyro_uri = service_name[:-(len(service_type) + 1)]
+            del self._servers[pyro_uri]
