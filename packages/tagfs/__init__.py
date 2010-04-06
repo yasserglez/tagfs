@@ -4,6 +4,15 @@
 Paquete principal de TagFS, un sistema de ficheros distribuidos basado en tags.
 """
 
+import os
+import sys
+
+
+# Add the contrib directory to the Python path.
+contrib_dir = os.path.join(os.path.dirname(__file__), 'contrib')
+sys.path.insert(0, os.path.abspath(contrib_dir))
+
+
 __version__ = '0.1'
 
 __authors__ = (
