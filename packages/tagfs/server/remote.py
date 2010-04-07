@@ -147,6 +147,9 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @rtype: C{str}
         @return: Contenido del archivo identificado por C{file_hash}.
         """
+        file_path = self._path_from_file_hash(file_hash)
+        with open(file_path) as file:
+            return file.read()
         
     def put(self, file_data, file_info):
         """
