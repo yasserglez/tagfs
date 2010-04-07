@@ -9,7 +9,7 @@ import os
 import Pyro.core
 import whoosh.index
 import whoosh.fields
-import whoosh.qparser
+import whoosh.query
 
 
 class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
@@ -208,6 +208,10 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @return: Conjunto con los hash de los archivos que tienen los tags 
             especificados mediante el conjunto C{tags}.
         """
+        searcher = self._index.searcher()
+        tags_terms = [tag.decode('utf-8') for tag in tags]
+        query = whoosh.query.And([whoosh.query.Term('tags', term) for term in tags_terms])
+        return set([result['hash'] for result in searcher.search(query)])
         
     def search(self, text):
         """
@@ -220,8 +224,8 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @rtype: C{set}
         @return: Conjunto con los hash de los archivos que son relevantes 
             para la búsqueda de texto libre C{text}.
-        """     
-                
+        """
+                        
     def info(self, file_hash):
         """
         Obtiene información a partir del hash de un archivo.
