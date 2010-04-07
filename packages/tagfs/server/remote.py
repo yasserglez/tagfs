@@ -10,6 +10,7 @@ import Pyro.core
 import whoosh.index
 import whoosh.fields
 import whoosh.query
+import whoosh.qparser
 
 
 class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
@@ -50,7 +51,8 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         la información acerca de los archivos almacenados en este servidor
         de TagFS.
         """
-        self._schema = whoosh.fields.Schema(
+        self._encoding = 'utf-8'
+        self._index_schema = whoosh.fields.Schema(
             hash=whoosh.fields.ID(stored=True, unique=True),
             tags=whoosh.fields.KEYWORD(stored=True, lowercase=True, 
                                        scorable=True, field_boost=2.0),
@@ -62,7 +64,7 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         index_dir = os.path.join(self._data_dir, 'index')
         if not os.path.isdir(index_dir):
             os.mkdir(index_dir)
-            self._index = whoosh.index.create_in(index_dir, self._schema)
+            self._index = whoosh.index.create_in(index_dir, self._index_schema)
         else:
             self._index = whoosh.index.open_dir(index_dir)
         if self._index.doc_count() > 0:
@@ -131,7 +133,7 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @return: Contenido del archivo identificado por C{file_hash}.
         """
         searcher = self._index.searcher()
-        doc = searcher.document(hash=file_hash.decode('utf-8'))
+        doc = searcher.document(hash=file_hash.decode(self._encoding))
         file_path = os.path.join(self._files_dir, doc['path'])
         with open(file_path) as file:
             return file.read()
@@ -158,14 +160,14 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         # Add the metadata of the file to the index.
         file_path = file_path[len(self._files_dir) + 1:]
         writer = self._index.writer()
-        writer.delete_by_term('hash', file_hash.decode('utf-8'))
+        writer.delete_by_term('hash', file_hash.decode(self._encoding))
         writer.add_document(
-            hash=file_info['hash'].decode('utf-8'),
-            tags=u' '.join([tag.decode('utf-8') for tag in file_info['tags']]),
-            description=file_info['description'].decode('utf-8'),
-            name=file_info['name'].decode('utf-8'),
-            size=file_info['size'].decode('utf-8'),
-            path=file_path.decode('utf-8'),
+            hash=file_info['hash'].decode(self._encoding),
+            tags=u' '.join([tag.decode(self._encoding) for tag in file_info['tags']]),
+            description=file_info['description'].decode(self._encoding),
+            name=file_info['name'].decode(self._encoding),
+            size=file_info['size'].decode(self._encoding),
+            path=file_path.decode(self._encoding),
         )               
         writer.commit()
 
@@ -182,14 +184,14 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             dentro del sistema de ficheros distribuidos.
         """
         searcher = self._index.searcher()
-        doc = searcher.document(hash=file_hash.decode('utf-8'))
+        doc = searcher.document(hash=file_hash.decode(self._encoding))
         
         # Remove the file from the files directory.
         os.remove(os.path.join(self._files_dir, doc['path']))
         
         # Remove the metadata of the file from the index.
         writer = self._index.writer()
-        writer.delete_by_term('hash', file_hash.decode('utf-8'))
+        writer.delete_by_term('hash', file_hash.decode(self._encoding))
         writer.commit()
         
         # Update the empty space in this server.
@@ -209,14 +211,14 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             especificados mediante el conjunto C{tags}.
         """
         searcher = self._index.searcher()
-        tags_terms = [tag.decode('utf-8') for tag in tags]
+        tags_terms = [tag.decode(self._encoding) for tag in tags]
         query = whoosh.query.And([whoosh.query.Term('tags', term) for term in tags_terms])
         return set([result['hash'] for result in searcher.search(query)])
         
     def search(self, text):
         """
-        Realiza una búsqueda de texto libre en los tags y en las descripciones
-        de los archivos almacenados en este servidor.
+        Realiza una búsqueda de texto libre en los tags, la descripción y el 
+        nombre de los archivos almacenados en este servidor.
         
         @type text: C{str}
         @param text: Texto de la búsqueda que se quiere realizar.
@@ -225,6 +227,11 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @return: Conjunto con los hash de los archivos que son relevantes 
             para la búsqueda de texto libre C{text}.
         """
+        searcher = self._index.searcher()
+        default_fields = ['tags', 'description', 'name']
+        parser = whoosh.qparser.MultifieldParser(default_fields, schema=self._index_schema)
+        query = parser.parse(text.decode(self._encoding))
+        return set([result['hash'] for result in searcher.search(query)])
                         
     def info(self, file_hash):
         """
@@ -239,7 +246,7 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @return: Diccionario con los metadatos del archivo.
         """
         searcher = self._index.searcher()
-        doc = searcher.document(hash=file_hash.decode('utf-8'))
+        doc = searcher.document(hash=file_hash.decode(self._encoding))
         info = {}
         info['hash'] = doc['hash']
         info['tags'] = set(doc['tags'].split())
