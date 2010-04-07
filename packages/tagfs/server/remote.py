@@ -65,7 +65,8 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             self._index = whoosh.index.create_in(index_dir, self._schema)
         else:
             self._index = whoosh.index.open_dir(index_dir)
-        self._index.optimize()
+        if self._index.doc_count() > 0:
+            self._index.optimize()
         
     def _init_files(self):
         """
@@ -242,3 +243,11 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         @rtype: C{dict}
         @return: Diccionario con los metadatos del archivo.
         """
+        
+    def terminate(self):
+        """
+        Este método es utilizado por la instancia de la clase C{TagFSServer} para
+        indicar que va a dejar de estar disponible en la red este servidor y que
+        se deben guardar todos los recursos abiertos.
+        """
+        self._index.close()
