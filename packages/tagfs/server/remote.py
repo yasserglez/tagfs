@@ -105,6 +105,24 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             data_dir_size += sum(map(get_file_size, files))
         self._status['empty_space'] = capacity - data_dir_size
         
+    def _path_from_file_hash(self, file_hash):
+        """
+        Obtiene del índice la ruta relativa al directorio de datos correspondiente
+        al archivo identificado con el hash dado y retorna la ruta absoluta
+        a este archivo.
+        
+        @type file_hash: C{str}
+        @param file_hash: Hash del contenido del archivo cuya ruta absoluta
+            se quiere obtener. Este hash identifica al archivo únicamente
+            dentro del sistema de ficheros distribuidos.
+            
+        @rtype: C{str}
+        @return: Ruta absoluta del archivo identificado por el hash dado.
+        """
+        searcher = self._index.searcher()
+        doc = searcher.document(hash=file_hash.decode('utf-8'))
+        return os.path.join(self._files_dir, doc['path'])
+        
     def status(self):
         """
         Brinda información a los clientes TagFS acerca del estado de este
@@ -175,6 +193,11 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             eliminar. Este hash identifica al archivo únicamente
             dentro del sistema de ficheros distribuidos.
         """
+        file_path = self._path_from_file_hash(file_hash)
+        os.remove(file_path)
+        writer = self._index.writer()
+        writer.delete_by_term('hash', file_hash.decode('utf-8'))
+        writer.commit()
         
     def list(self, tags):
         """
