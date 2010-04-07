@@ -43,9 +43,30 @@ def _parse_args(argv):
     parser.add_option('-i', '--ip', action='store', dest='address', type='string', metavar='IP',
                       help='the IP address of the interface where the TagFS server ' \
                            'should listen for incoming connections')
+    parser.add_option('-d', '--data-dir', action='store', dest='data_dir', type='string', metavar='DIRECTORY',
+                      help='directory used to keep the files saved in this TagFS server ' \
+                           'and other related files')
+    parser.add_option('-c', '--capacity', action='store', dest='capacity', type='string', metavar='CAPACITY', 
+                      help='sets the storage capacity of this TagFS server in bytes ' \
+                           'optionally followed by a K, M or G suffix (default: %default)')
+    parser.set_default('capacity', '1G')
     options, args = parser.parse_args(args=argv[1:])
     if not options.address:
         parser.error('missing required --ip option')
+    if not options.data_dir:
+        parser.error('missing required --data-dir option')
+    options.data_dir = os.path.abspath(options.data_dir)
+    try:
+        if options.capacity.endswith('K'):
+            options.capacity = int(options.capacity[:-1]) * 1024
+        elif options.capacity.endswith('M'):
+            options.capacity = int(options.capacity[:-1]) * (1024 ** 2)
+        elif options.capacity.endswith('G'):
+            options.capacity = int(options.capacity[:-1]) * (1024 ** 3)
+        else:
+            options.capacity = int(options.capacity[:-1])
+    except:
+        parser.error('invalid required --capacity option')
     return options, args
 
 
@@ -61,7 +82,7 @@ def main(argv):
         del programa y 1 en el caso contrario.
     """
     options, args = _parse_args(argv)
-    server = TagFSServer(options.address)
+    server = TagFSServer(options.address, options.data_dir, options.capacity)
     server.start()
     return EXIT_SUCCESS
 

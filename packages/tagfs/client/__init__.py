@@ -6,9 +6,10 @@ Implementación de la clase base de los clientes TagFS.
 
 import threading
 
+import Zeroconf
+import Pyro.core
+
 from tagfs.common import ZEROCONF_SERVICE_TYPE
-from tagfs.contrib.Zeroconf import Zeroconf, ServiceBrowser
-from tagfs.contrib.Pyro import core
 
 
 class TagFSClient(object):
@@ -40,8 +41,8 @@ class TagFSClient(object):
         self._servers_mutex = threading.Lock()                
         self.addService = self.server_added
         self.removeService = self.server_removed
-        self._zeroconf = Zeroconf(self._address)
-        self._zeroconf_browser = ServiceBrowser(self._zeroconf, ZEROCONF_SERVICE_TYPE, self)
+        self._zeroconf = Zeroconf.Zeroconf(self._address)
+        self._zeroconf_browser = Zeroconf.ServiceBrowser(self._zeroconf, ZEROCONF_SERVICE_TYPE, self)
         
     def terminate(self):
         """
@@ -68,7 +69,7 @@ class TagFSClient(object):
         """
         with self._servers_mutex:
             pyro_uri = service_name[:-(len(service_type) + 1)]
-            pyro_proxy = core.getProxyForURI(pyro_uri)
+            pyro_proxy = Pyro.core.getProxyForURI(pyro_uri)
             self._servers[pyro_uri] = pyro_proxy
         
     def server_removed(self, zeroconf, service_type, service_name):

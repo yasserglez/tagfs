@@ -7,10 +7,11 @@ Implementación del servidor de TagFS.
 import time
 import socket
 
+import Zeroconf
+import Pyro.core
+
 from tagfs.common import ZEROCONF_SERVICE_TYPE
 from tagfs.server.remote import RemoteTagFSServer
-from tagfs.contrib.Zeroconf import Zeroconf, ServiceInfo
-from tagfs.contrib.Pyro import core
 
 
 class TagFSServer(object):
@@ -18,7 +19,7 @@ class TagFSServer(object):
     Servidor de TagFS.
     """
     
-    def __init__(self, address):
+    def __init__(self, address, data_dir, capacity):
         """
         Inicializa una instancia de un servidor de TagFS.
         
@@ -30,7 +31,19 @@ class TagFSServer(object):
         @type address: C{str}
         @param address: Dirección IP de la interfaz donde debe escuchar esta
            instancia del servidor de TagFS.
+           
+        @type data_dir: C{str}
+        @param data_dir: Ruta absoluta al directorio utilizado para almacenar
+            los archivos y otros datos relacionados con el funcionamiento
+            del servidor.
+            
+        @type capacity: C{int}
+        @param capacity: Capacidad de almacenamiento en bytes de este servidor.
+            TagFS garantizará que la capacidad utilizada por todos los
+            archivos almacenados en este servidor no sobrepasará esta
+            capacidad.
         """
+        self._remote_server = RemoteTagFSServer(data_dir, capacity)
         self.init_pyro(address)
         self.init_autodiscovery()
         
@@ -43,19 +56,19 @@ class TagFSServer(object):
         @param address: Dirección IP de la interfaz donde debe escuchar esta
            instancia del servidor de TagFS.
         """
-        core.initServer()
-        self._daemon = core.Daemon(host=address)
-        self._pyro_uri = self._daemon.connect(RemoteTagFSServer(), 'tagfs')
+        Pyro.core.initServer()
+        self._daemon = Pyro.core.Daemon(host=address)
+        self._pyro_uri = self._daemon.connect(self._remote_server, 'tagfs')
         
     def init_autodiscovery(self):
         """
         Inicializa el descubrimiento automático de los servidores TagFS.
         """
-        self._zeroconf = Zeroconf(self._daemon.hostname)
+        self._zeroconf = Zeroconf.Zeroconf(self._daemon.hostname)
         zeroconf_service_name = '{n}.{t}'.format(n=self._pyro_uri, t=ZEROCONF_SERVICE_TYPE)
-        self._zeroconf_service = ServiceInfo(ZEROCONF_SERVICE_TYPE, zeroconf_service_name, 
-                                             socket.inet_aton(self._daemon.hostname),
-                                             self._daemon.port, 0, 0, {})
+        self._zeroconf_service = Zeroconf.ServiceInfo(ZEROCONF_SERVICE_TYPE, zeroconf_service_name, 
+                                                      socket.inet_aton(self._daemon.hostname),
+                                                      self._daemon.port, 0, 0, {})
         self._zeroconf.registerService(self._zeroconf_service)
         
     def start(self):
@@ -70,5 +83,6 @@ class TagFSServer(object):
                 # End the main loop with CTRL-C.
                 break
         # Main loop of the daemon exited. Prepare to exit the program.
+        self._daemon.shutdown()
         self._zeroconf.unregisterService(self._zeroconf_service)
         self._zeroconf.close()
