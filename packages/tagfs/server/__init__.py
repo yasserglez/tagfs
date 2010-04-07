@@ -83,6 +83,7 @@ class TagFSServer(object):
                 # End the main loop with CTRL-C.
                 break
         # Main loop of the daemon exited. Prepare to exit the program.
+        self._remote_server.terminate()
         self._daemon.shutdown()
         self._zeroconf.unregisterService(self._zeroconf_service)
         self._zeroconf.close()
