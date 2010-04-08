@@ -124,6 +124,13 @@ class TagFSClient(object):
             este archivo. El cliente intentará que este archivo se almacene 
             en un número de nodos correspondiente al porciento indicado del 
             total de nodos disponibles en el momento en que se añade el archivo.
+            
+        @rtype: C{bool}
+        @return: Este método retornará C{True} si el archivo se logró almacenar
+            en al menos un servidor del sistema distribuido o C{False} en caso
+            contrario. Es posible que aunque existan servidores conectados
+            no se pueda almacenar el archivo porque estos no tengan la 
+            capacidad de almacenamiento necesaria. 
         """
         with self._servers_mutex:
             size = len(data)
@@ -145,5 +152,15 @@ class TagFSClient(object):
             info['size'] = str(size)
             
             # Save the file in each selected server.
+            saved = False
             for server in servers:
-                server.put(data, info)
+                try:
+                    server.put(data, info)
+                except Exception:
+                    # Currently ignoring any exception here. If the server
+                    # is not accesible it will be eventually removed from the
+                    # server list when is detected by Zeroconf.
+                    pass
+                else:
+                    saved = True
+        return saved

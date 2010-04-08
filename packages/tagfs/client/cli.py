@@ -48,5 +48,5 @@ class CLITagFSClient(TagFSClient):
         obtener información acerca de los parámetros de este método consulte 
         la documentación del método C{put} de la clase C{TagFSClient}.
         """
-        super(CLITagFSClient, self).put(name, description, tags, data, 
-                                        self._replication)
+        return super(CLITagFSClient, self).put(name, description, tags, data, 
+                                               self._replication)
