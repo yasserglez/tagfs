@@ -43,9 +43,15 @@ def _parse_args(argv):
     parser.add_option('-i', '--ip', action='store', dest='address', type='string', metavar='IP',
                       help='the IP address of the interface that the TagFS client ' \
                            'should use to comunicate with the TagFS servers')    
+    parser.add_option('-r', '--replication', action='store', dest='replication', type='int', metavar='PERCENTAGE',
+                      help='the replication percentage to be used during this ' \
+                           'session of the TagFS client (default: %default)')
+    parser.set_default('replication', 25)
     options, args = parser.parse_args(args=argv[1:])
     if not options.address:
-        parser.error('missing required --ip option')    
+        parser.error('missing required --ip option')
+    if not (0 <= options.replication <= 100):
+        parser.error('invalid replication percentage specified')    
     return options, args
 
 
@@ -61,7 +67,7 @@ def main(argv):
         del programa y 1 en el caso contrario.
     """
     options, args = _parse_args(argv)   
-    client = CLITagFSClient(options.address)
+    client = CLITagFSClient(options.address, options.replication)
     client.start()
     return EXIT_SUCCESS
 

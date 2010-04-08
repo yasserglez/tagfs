@@ -4,6 +4,8 @@
 Implementación de la clase base de los clientes TagFS.
 """
 
+import random
+import hashlib
 import threading
 
 import Zeroconf
@@ -91,3 +93,57 @@ class TagFSClient(object):
         with self._servers_mutex:
             pyro_uri = service_name[:-(len(service_type) + 1)]
             del self._servers[pyro_uri]
+
+    def put(self, name, description, tags, data, replication):
+        """
+        Añade un nuevo archivo al sistema de ficheros distribuido.
+        
+        @type name: C{str}
+        @param name: Nombre del archivo que se quiere añadir al sistema de 
+            ficheros distribuido. Es nombre se utilizará para crear el archivo 
+            en un sistema de ficheros local cuando se obtenga del sistema de 
+            ficheros distribuido. Será posible realizar búsquedas en el sistema 
+            distribuido introduciendo términos incluídos en el nombre.
+        
+        @type description: C{str}
+        @param description: Descripción del archivo que se quiere añadir al 
+            sistema de ficheros distribuido. Será posible realizar búsquedas 
+            en el sistema distribuido introduciendo términos incluídos en la 
+            descripción.
+        
+        @type tags: C{set}
+        @param tags: Conjunto de tags que se deben asociar a este archivo. Cada 
+            tag debe ser una palabra y no debe contener espacios. Será posible 
+            relizar búsquedas en el sistema distribuido introduciendo tags.
+
+        @type data: C{str}
+        @param data: Contenido del archivo.
+        
+        @type replication: C{int}
+        @param replication: Porciento de replicación que se debe utillizar para 
+            este archivo. El cliente intentará que este archivo se almacene 
+            en un número de nodos correspondiente al porciento indicado del 
+            total de nodos disponibles en el momento en que se añade el archivo.
+        """
+        with self._servers_mutex:
+            size = len(data)
+            
+            # Servers where the file should be saved.
+            num_servers = max(1, int((replication * len(self._servers)) / 100.0))
+            servers = [server for server in self._servers.values()
+                       if (server.status()['empty_space'] >= size)]
+            servers = random.sample(servers, min(len(servers), num_servers))
+            
+            # Collect the metadata of the file.
+            md5_hash = hashlib.new('md5')
+            md5_hash.update(data)
+            info = {}
+            info['hash'] = md5_hash.hexdigest()
+            info['tags'] = tags
+            info['description'] = description
+            info['name'] = name
+            info['size'] = str(size)
+            
+            # Save the file in each selected server.
+            for server in servers:
+                server.put(data, info)

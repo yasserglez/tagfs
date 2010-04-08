@@ -7,10 +7,7 @@ Implementación del servidor TagFS compartido en la red.
 import os
 
 import Pyro.core
-import whoosh.index
-import whoosh.fields
-import whoosh.query
-import whoosh.qparser
+import whoosh.index, whoosh.fields, whoosh.query, whoosh.qparser
 
 
 class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
@@ -196,7 +193,6 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         
         # Update the empty space in this server.
         self._status['empty_space'] += long(doc['size'])
-        
         
     def list(self, tags):
         """
