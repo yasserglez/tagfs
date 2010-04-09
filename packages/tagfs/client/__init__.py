@@ -157,10 +157,127 @@ class TagFSClient(object):
                 try:
                     server.put(data, info)
                 except Exception:
-                    # Currently ignoring any exception here. If the server
-                    # is not accesible it will be eventually removed from the
-                    # server list when is detected by Zeroconf.
+                    # Ignoring any exception here. If the server is not accesible 
+                    # it will be eventually removed from the server list when is 
+                    # detected by Zeroconf.
                     pass
                 else:
                     saved = True
         return saved
+    
+    def get(self, file_hash):
+        """
+        Obtiene el contenido del archivo identificado por C{file_hash}
+        
+        @type file_hash: C{str}
+        @param file_hash: Hash del contenido del archivo cuyos datos
+            se quiere obtener. Este hash identifica al archivo únicamente
+            dentro del sistema de ficheros distribuidos.
+            
+        @rtype: C{str}
+        @return: Contenido del archivo identificado por C{file_hash} si
+            este archivo existe, C{None} si no hay almacenado en el 
+            sistema de ficheros distribuido un archivo identificado 
+            por el hash dado.
+        """
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    data = server.get(file_hash)
+                    if data is not None:
+                        return data
+                except Exception:
+                    # Ignoring any exception here.
+                    pass
+        return None
+    
+    def remove(self, file_hash):
+        """
+        Elimina un archivo almacenado en el sistema de ficheros distribuido.
+        Si el sistema de ficheros no tiene almacenado un archivo identificado
+        con el hash dado no se realizará ninguna acción.
+        
+        @type file_hash: C{str}
+        @param file_hash: Hash del contenido del archivo que se quiere
+            eliminar. Este hash identifica al archivo únicamente
+            dentro del sistema de ficheros distribuido.
+        """    
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    server.remove(file_hash)
+                except Exception:
+                    # Ignoring any exception here.
+                    pass
+
+    def list(self, tags):
+        """
+        Lista los archivos almacenados en el sistema de ficheros distribuido
+        que tienen todos los tags especificados en el conjunto C{tags}.
+        
+        @type tags: C{set}
+        @param tags: Conjunto de tags que deben tener los archivos.
+        
+        @rtype: C{set}
+        @return: Conjunto con los hash de los archivos que tienen los tags 
+            especificados mediante el conjunto C{tags}.
+        """
+        all_results = set()
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    server_results = server.list(tags)
+                    all_results |= server_results
+                except Exception:
+                    # Ignoring any exception here.
+                    pass                    
+        return all_results
+    
+    def search(self, text):
+        """
+        Realiza una búsqueda de texto libre en los tags, la descripción y el 
+        nombre de los archivos almacenados en el sistema de ficheros
+        distribuido.
+        
+        @type text: C{str}
+        @param text: Texto de la búsqueda que se quiere realizar.
+        
+        @rtype: C{set}
+        @return: Conjunto con los hash de los archivos que son relevantes 
+            para la búsqueda de texto libre C{text}.
+        """
+        all_results = set()
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    server_results = server.search(text)
+                    all_results |= server_results
+                except Exception:
+                    # Ignoring any exception here.
+                    pass                    
+        return all_results
+
+    def info(self, file_hash):
+        """
+        Obtiene información a partir del hash de un archivo.
+        
+        @type file_hash: C{str}
+        @param file_hash: Hash del contenido del archivo cuya información
+            se quiere obtener. Este hash identifica al archivo únicamente
+            dentro del sistema de ficheros distribuidos.
+            
+        @rtype: C{dict}
+        @return: Diccionario con los metadatos del archivo si el sistema
+            de ficheros distribuido tiene almacenado un archivo identificado 
+            por el hash dado, C{None} en caso contrario.
+        """
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    info = server.info(file_hash)
+                    if info is not None:
+                        return info
+                except Exception:
+                    # Ignoring any exception here.
+                    pass
+        return None

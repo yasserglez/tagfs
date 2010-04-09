@@ -37,7 +37,7 @@ def _parse_args(argv):
     usage = '%prog [options]'
     version = '%%prog (TagFS) v%s\n' % __version__
     authors = '\n'.join(['Copyright (C) 2010 %s' % a for a in __authors__])
-    desc = 'Client of the tag-based distributed filesystem.'
+    desc = 'Command line client of the tag-based distributed filesystem.'
     parser = optparse.OptionParser(usage=usage, version=version + authors, 
                                    description=desc, prog=os.path.basename(argv[0]))
     parser.add_option('-i', '--ip', action='store', dest='address', type='string', metavar='IP',

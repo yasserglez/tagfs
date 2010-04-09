@@ -127,13 +127,18 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             dentro del sistema de ficheros distribuidos.
             
         @rtype: C{str}
-        @return: Contenido del archivo identificado por C{file_hash}.
+        @return: Contenido del archivo identificado por C{file_hash} si
+            este archivo existe, C{None} si no hay almacenado en este
+            servidor un archivo identificado por el hash dado.
         """
         searcher = self._index.searcher()
         doc = searcher.document(hash=file_hash.decode(self._encoding))
-        file_path = os.path.join(self._files_dir, doc['path'])
-        with open(file_path) as file:
-            return file.read()
+        if doc is not None:
+            file_path = os.path.join(self._files_dir, doc['path'])
+            with open(file_path) as file:
+                return file.read()
+        else:
+            return None
         
     def put(self, file_data, file_info):
         """
@@ -173,12 +178,14 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
         
     def remove(self, file_hash):
         """
-        Elimina un archivo almacenado en este servidor.
+        Elimina un archivo almacenado en este servidor. Si este servidor
+        no tiene almacenado un archivo identificado con el hash dado
+        no se realizará ninguna acción.
         
         @type file_hash: C{str}
         @param file_hash: Hash del contenido del archivo que se quiere
             eliminar. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuidos.
+            dentro del sistema de ficheros distribuido.
         """
         searcher = self._index.searcher()
         doc = searcher.document(hash=file_hash.decode(self._encoding))
@@ -239,17 +246,22 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             dentro del sistema de ficheros distribuidos.
             
         @rtype: C{dict}
-        @return: Diccionario con los metadatos del archivo.
+        @return: Diccionario con los metadatos del archivo si este servidor
+            tiene almacenado un archivo identificado por el hash dado,
+            C{None} en caso contrario.
         """
         searcher = self._index.searcher()
         doc = searcher.document(hash=file_hash.decode(self._encoding))
-        info = {}
-        info['hash'] = doc['hash']
-        info['tags'] = set(doc['tags'].split())
-        info['description'] = doc['description']
-        info['name'] = doc['name']
-        info['size'] = doc['size']
-        return info        
+        if doc is not None:
+            info = {}
+            info['hash'] = doc['hash']
+            info['tags'] = set(doc['tags'].split())
+            info['description'] = doc['description']
+            info['name'] = doc['name']
+            info['size'] = doc['size']
+            return info
+        else:
+            return None        
         
     def terminate(self):
         """
