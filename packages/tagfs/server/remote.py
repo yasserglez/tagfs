@@ -183,17 +183,17 @@ class RemoteTagFSServer(object):
         """
         searcher = self._index.searcher()
         doc = searcher.document(hash=file_hash.decode(self._encoding))
-        
-        # Remove the file from the files directory.
-        os.remove(os.path.join(self._files_dir, doc['path']))
-        
-        # Remove the metadata of the file from the index.
-        writer = self._index.writer()
-        writer.delete_by_term('hash', file_hash.decode(self._encoding))
-        writer.commit()
-        
-        # Update the empty space in this server.
-        self._status['empty_space'] += long(doc['size'])
+        if doc is not None:
+            # Remove the file from the files directory.
+            os.remove(os.path.join(self._files_dir, doc['path']))
+            
+            # Remove the metadata of the file from the index.
+            writer = self._index.writer()
+            writer.delete_by_term('hash', file_hash.decode(self._encoding))
+            writer.commit()
+            
+            # Update the empty space in this server.
+            self._status['empty_space'] += long(doc['size'])
         
     def list(self, tags):
         """
@@ -208,7 +208,7 @@ class RemoteTagFSServer(object):
             especificados mediante el conjunto C{tags}.
         """
         searcher = self._index.searcher()
-        tags_terms = [tag.decode(self._encoding) for tag in tags]
+        tags_terms = [tag.decode(self._encoding).lower() for tag in tags]
         query = whoosh.query.And([whoosh.query.Term('tags', term) for term in tags_terms])
         return set([result['hash'] for result in searcher.search(query)])
         
