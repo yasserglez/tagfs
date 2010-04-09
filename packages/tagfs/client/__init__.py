@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Implementación de la clase base de los clientes TagFS.
+Implementación de los clientes TagFS.
 """
 
 import random

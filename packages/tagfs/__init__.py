@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Paquete principal de TagFS, un sistema de ficheros distribuidos basado en tags.
+Paquete principal de TagFS, un sistema de ficheros distribuido basado en tags.
 """
 
 import os

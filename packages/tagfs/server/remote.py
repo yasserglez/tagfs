@@ -6,11 +6,10 @@ Implementación del servidor TagFS compartido en la red.
 
 import os
 
-import Pyro.core
 import whoosh.index, whoosh.fields, whoosh.query, whoosh.qparser
 
 
-class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
+class RemoteTagFSServer(object):
     """
     Servidor TagFS compartido en la red utilizando Pyro. 
     """
@@ -18,10 +17,6 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
     def __init__(self, data_dir, capacity):
         """
         Inicializa una instancia de un servidor TagFS compartido en la red.
-        Como parte de la inicialización de este objeto se ejecuta el método 
-        encargado de inicializar los aspectos relacionados con Pyro para 
-        garantizar que los métodos de esta clase puedan ser ejecutados por 
-        los clientes TagFS.
         
         @type data_dir: C{str}
         @param data_dir: Ruta absoluta al directorio utilizado para almacenar
@@ -34,7 +29,6 @@ class RemoteTagFSServer(Pyro.core.SynchronizedObjBase):
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.
         """
-        super(RemoteTagFSServer, self).__init__()
         self._data_dir = data_dir
         if not os.path.isdir(self._data_dir):
             os.mkdir(self._data_dir)

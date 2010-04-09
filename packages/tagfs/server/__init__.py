@@ -43,7 +43,9 @@ class TagFSServer(object):
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.
         """
-        self._remote_server = RemoteTagFSServer(data_dir, capacity)
+        self._remote = RemoteTagFSServer(data_dir, capacity)
+        self._pyro_remote = Pyro.core.ObjBase()
+        self._pyro_remote.delegateTo(self._remote)
         self.init_pyro(address)
         self.init_autodiscovery()
         
@@ -58,7 +60,7 @@ class TagFSServer(object):
         """
         Pyro.core.initServer()
         self._daemon = Pyro.core.Daemon(host=address)
-        self._pyro_uri = self._daemon.connect(self._remote_server, 'tagfs')
+        self._pyro_uri = self._daemon.connect(self._pyro_remote, 'tagfs')
         
     def init_autodiscovery(self):
         """
@@ -83,7 +85,7 @@ class TagFSServer(object):
                 # End the main loop with CTRL-C.
                 break
         # Main loop of the daemon exited. Prepare to exit the program.
-        self._remote_server.terminate()
+        self._remote.terminate()
         self._daemon.shutdown()
         self._zeroconf.unregisterService(self._zeroconf_service)
         self._zeroconf.close()
