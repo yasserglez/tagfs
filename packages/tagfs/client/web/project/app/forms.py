@@ -12,7 +12,7 @@ class UploadForm(forms.ModelForm):
     description     = forms.CharField(label='Descripción', widget=forms.Textarea, max_length=500)
     tags            = forms.CharField(label='Tags', max_length=50)
     data            = forms.FileField(label='Archivo', widget=forms.FileInput)
-    replication     = forms.IntegerField(widget=forms.HiddenInput)    
+    replication     = forms.IntegerField(default=25, widget=forms.HiddenInput)    
     
     def __unicode__(self):
         return self.name
