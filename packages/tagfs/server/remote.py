@@ -7,6 +7,7 @@ Implementación del servidor TagFS compartido en la red.
 import os
 
 import whoosh.index, whoosh.fields, whoosh.query, whoosh.qparser
+import sync
 
 
 class RemoteTagFSServer(object):
@@ -35,6 +36,7 @@ class RemoteTagFSServer(object):
         self._init_index()
         self._init_files()
         self._init_status(capacity)
+        self._mrsw_lock = sync.mrsw()
         
     def _init_index(self):
         """
@@ -109,7 +111,11 @@ class RemoteTagFSServer(object):
         @return: Diccionario que contiene información acerca del estado 
             del servidor.
         """
-        return self._status
+        self._mrsw_lock.read_in()
+        try:
+            return self._status
+        finally:
+            self._mrsw_lock.read_out()
         
     def get(self, file_hash):
         """
@@ -125,14 +131,18 @@ class RemoteTagFSServer(object):
             este archivo existe, C{None} si no hay almacenado en este
             servidor un archivo identificado por el hash dado.
         """
-        searcher = self._index.searcher()
-        doc = searcher.document(hash=file_hash.decode(self._encoding))
-        if doc is not None:
-            file_path = os.path.join(self._files_dir, doc['path'])
-            with open(file_path) as file:
-                return file.read()
-        else:
-            return None
+        self._mrsw_lock.read_in()
+        try:
+            searcher = self._index.searcher()
+            doc = searcher.document(hash=file_hash.decode(self._encoding))
+            if doc is not None:
+                file_path = os.path.join(self._files_dir, doc['path'])
+                with open(file_path) as file:
+                    return file.read()
+            else:
+                return None
+        finally:
+            self._mrsw_lock.read_out()
         
     def put(self, file_data, file_info):
         """
@@ -145,30 +155,34 @@ class RemoteTagFSServer(object):
         @type file_info: C{dict}
         @param file_info: Diccionario con los metadatos del archivo.         
         """
-        # Save the file in the files directory.
-        file_name, file_hash = file_info['name'], file_info['hash']
-        file_path = os.path.join(self._files_dir, os.path.sep.join(file_hash[0:5]), file_name)
-        if not os.path.isdir(os.path.dirname(file_path)):
-            os.makedirs(os.path.dirname(file_path))
-        with open(file_path, 'w') as file:
-            file.write(file_data)
-
-        # Add the metadata of the file to the index.
-        file_path = file_path[len(self._files_dir) + 1:]
-        writer = self._index.writer()
-        writer.delete_by_term('hash', file_hash.decode(self._encoding))
-        writer.add_document(
-            hash=file_info['hash'].decode(self._encoding),
-            tags=u' '.join([tag.decode(self._encoding) for tag in file_info['tags']]),
-            description=file_info['description'].decode(self._encoding),
-            name=file_info['name'].decode(self._encoding),
-            size=file_info['size'].decode(self._encoding),
-            path=file_path.decode(self._encoding),
-        )               
-        writer.commit()
-
-        # Update the empty space of this server.
-        self._status['empty_space'] -= long(file_info['size'])
+        self._mrsw_lock.write_in()
+        try:
+            # Save the file in the files directory.
+            file_name, file_hash = file_info['name'], file_info['hash']
+            file_path = os.path.join(self._files_dir, os.path.sep.join(file_hash[0:5]), file_name)
+            if not os.path.isdir(os.path.dirname(file_path)):
+                os.makedirs(os.path.dirname(file_path))
+            with open(file_path, 'w') as file:
+                file.write(file_data)
+    
+            # Add the metadata of the file to the index.
+            file_path = file_path[len(self._files_dir) + 1:]
+            writer = self._index.writer()
+            writer.delete_by_term('hash', file_hash.decode(self._encoding))
+            writer.add_document(
+                hash=file_info['hash'].decode(self._encoding),
+                tags=u' '.join([tag.decode(self._encoding) for tag in file_info['tags']]),
+                description=file_info['description'].decode(self._encoding),
+                name=file_info['name'].decode(self._encoding),
+                size=file_info['size'].decode(self._encoding),
+                path=file_path.decode(self._encoding),
+            )               
+            writer.commit()
+    
+            # Update the empty space of this server.
+            self._status['empty_space'] -= long(file_info['size'])
+        finally:
+            self._mrsw_lock.write_out()
         
     def remove(self, file_hash):
         """
@@ -181,19 +195,23 @@ class RemoteTagFSServer(object):
             eliminar. Este hash identifica al archivo únicamente
             dentro del sistema de ficheros distribuido.
         """
-        searcher = self._index.searcher()
-        doc = searcher.document(hash=file_hash.decode(self._encoding))
-        if doc is not None:
-            # Remove the file from the files directory.
-            os.remove(os.path.join(self._files_dir, doc['path']))
-            
-            # Remove the metadata of the file from the index.
-            writer = self._index.writer()
-            writer.delete_by_term('hash', file_hash.decode(self._encoding))
-            writer.commit()
-            
-            # Update the empty space in this server.
-            self._status['empty_space'] += long(doc['size'])
+        self._mrsw_lock.write_in()
+        try:
+            searcher = self._index.searcher()
+            doc = searcher.document(hash=file_hash.decode(self._encoding))
+            if doc is not None:
+                # Remove the file from the files directory.
+                os.remove(os.path.join(self._files_dir, doc['path']))
+                
+                # Remove the metadata of the file from the index.
+                writer = self._index.writer()
+                writer.delete_by_term('hash', file_hash.decode(self._encoding))
+                writer.commit()
+                
+                # Update the empty space in this server.
+                self._status['empty_space'] += long(doc['size'])
+        finally:
+            self._mrsw_lock.read_out()
         
     def list(self, tags):
         """
@@ -207,11 +225,15 @@ class RemoteTagFSServer(object):
         @return: Conjunto con los hash de los archivos que tienen los tags 
             especificados mediante el conjunto C{tags}.
         """
-        searcher = self._index.searcher()
-        tags_terms = [tag.decode(self._encoding).lower() for tag in tags]
-        query = whoosh.query.And([whoosh.query.Term('tags', term) for term in tags_terms])
-        return set([result['hash'] for result in searcher.search(query)])
-        
+        self._mrsw_lock.read_in()
+        try:
+            searcher = self._index.searcher()
+            tags_terms = [tag.decode(self._encoding).lower() for tag in tags]
+            query = whoosh.query.And([whoosh.query.Term('tags', term) for term in tags_terms])
+            return set([result['hash'] for result in searcher.search(query)])
+        finally:
+            self._mrsw_lock.read_out()
+
     def search(self, text):
         """
         Realiza una búsqueda de texto libre en los tags, la descripción y el 
@@ -224,11 +246,16 @@ class RemoteTagFSServer(object):
         @return: Conjunto con los hash de los archivos que son relevantes 
             para la búsqueda de texto libre C{text}.
         """
-        searcher = self._index.searcher()
-        default_fields = ['tags', 'description', 'name']
-        parser = whoosh.qparser.MultifieldParser(default_fields, schema=self._index_schema)
-        query = parser.parse(text.decode(self._encoding))
-        return set([result['hash'] for result in searcher.search(query)])
+        self._mrsw_lock.read_in()
+        try:
+            searcher = self._index.searcher()
+            default_fields = ['tags', 'description', 'name']
+            parser = whoosh.qparser.MultifieldParser(default_fields, schema=self._index_schema)
+            query = parser.parse(text.decode(self._encoding))
+            return set([result['hash'] for result in searcher.search(query)])
+        finally:
+            self._mrsw_lock.read_out()
+        
                         
     def info(self, file_hash):
         """
@@ -244,18 +271,22 @@ class RemoteTagFSServer(object):
             tiene almacenado un archivo identificado por el hash dado,
             C{None} en caso contrario.
         """
-        searcher = self._index.searcher()
-        doc = searcher.document(hash=file_hash.decode(self._encoding))
-        if doc is not None:
-            info = {}
-            info['hash'] = doc['hash']
-            info['tags'] = set(doc['tags'].split())
-            info['description'] = doc['description']
-            info['name'] = doc['name']
-            info['size'] = doc['size']
-            return info
-        else:
-            return None        
+        self._mrsw_lock.read_in()
+        try:
+            searcher = self._index.searcher()
+            doc = searcher.document(hash=file_hash.decode(self._encoding))
+            if doc is not None:
+                info = {}
+                info['hash'] = doc['hash']
+                info['tags'] = set(doc['tags'].split())
+                info['description'] = doc['description']
+                info['name'] = doc['name']
+                info['size'] = doc['size']
+                return info
+            else:
+                return None
+        finally:
+            self._mrsw_lock.read_out()        
         
     def terminate(self):
         """
