@@ -25,3 +25,12 @@ class ListForm(forms.ModelForm):
     
     def __unicode__(self):
         return self.tags
+
+class SearchForm(forms.ModelForm):
+    """
+    Form para busqueda de texto libre.
+    """
+    text            = forms.CharField(label='Texto', max_length=250)
+    
+    def __unicode__(self):
+        return self.text
