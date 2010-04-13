@@ -16,3 +16,12 @@ class UploadForm(forms.ModelForm):
     
     def __unicode__(self):
         return self.name
+
+class ListForm(forms.ModelForm):
+    """
+    Form para listar los ficheros que tienen todos los tags especificados.
+    """
+    tags            = forms.CharField(label='Tags', max_length=50)
+    
+    def __unicode__(self):
+        return self.tags
