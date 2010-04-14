@@ -3,16 +3,17 @@
 # Create your forms here.
 
 from django import forms
+from django.utils.translation import ungettext, ugettext_lazy as _
 
 class UploadForm(forms.ModelForm):
     """
     Form para subir los ficheros.
     """
-    name            = forms.CharField(label='Nombre', max_length=50)
-    description     = forms.CharField(label='Descripción', widget=forms.Textarea, max_length=500)
-    tags            = forms.CharField(label='Tags', max_length=50)
-    data            = forms.FileField(label='Archivo', widget=forms.FileInput)
-    replication     = forms.IntegerField(default=25, widget=forms.HiddenInput)    
+    name            = forms.CharField(label=_('Nombre'), max_length=50)
+    description     = forms.CharField(label=_('Descripción'), widget=forms.Textarea, max_length=500)
+    tags            = forms.CharField(label=_('Tags'), max_length=50)
+    data            = forms.FileField(label=_('Archivo'), widget=forms.FileInput)
+    replication     = forms.IntegerField(widget=forms.HiddenInput)    
     
     def __unicode__(self):
         return self.name
