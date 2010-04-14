@@ -1,0 +1,72 @@
+﻿{% extends "base.html" %}
+
+{% block body %}
+
+    <!-- wrap starts here -->
+    <div id="wrap">
+        
+        <!--login starts here -->
+        <div id="login">
+            
+            {% include "site/login.html" %}
+         
+        <!-- login ends here -->    
+        </div>
+        
+        <!--header starts here -->
+        <div id="header">
+        
+            <div id="logo">
+            
+                <a href="/"><img src="/media/img/logo.png"/></a>
+                <h1 id="logo-text">TagFS</h1>
+                <p id="slogan">Sistema de Ficheros Distribuido</p>
+                
+            </div>
+        
+        <!-- header ends here -->                  
+        </div>
+        
+        <!--address starts here -->
+        <div id="address">
+            
+            <p>
+                <a href="/">TagFS</a>
+                {% block address %} {% endblock %}
+            </p>        
+            
+        <!-- address ends here -->
+        </div>
+        
+        <!-- content-wrap starts here -->
+        <div id="content-wrap">
+            
+            <div id="main">
+                    
+                {% block content %} {% endblock %}
+    
+            </div>
+                
+            <div id="sidebar">
+                
+                {% block sidebar %} {% endblock %}					
+                        
+            </div>
+                    
+        <!-- content-wrap ends here -->	
+        </div>
+                        
+        <!--footer starts here-->
+        <div id="footer">
+                
+            <p>
+                &copy; 2010 <strong>TagFS</strong>
+            </p>
+        
+        <!-- footer ends here -->
+        </div>	
+    
+    <!-- wrap ends here -->
+    </div>
+    
+{% endblock %}
