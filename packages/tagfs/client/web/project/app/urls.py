@@ -1,5 +1,6 @@
 from django.conf.urls.defaults import *
-from django.views.static import serve
+
+from views import home
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -16,9 +17,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     # (r'^admin/', include(admin.site.urls)),
     
-    #App
-    (r'^$', include('app.urls')),
-    
-    #Media
-    (r'^media/(?P<path>.*)$', serve, dict(document_root='../media/')),
+    #Home
+    (r'^$', home),
 )
