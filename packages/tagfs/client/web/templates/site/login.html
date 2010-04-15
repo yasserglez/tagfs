@@ -1,0 +1,17 @@
+{% if user.is_anonymous %}
+    <div id="info">
+        <a href="/accounts/register/">New User</a>						
+    </div>
+    <form id="form" action="/accounts/login/" method="post">
+        <p>
+            <input name="username" value="username" type="text" />
+            <input name="password" value="password" type="password" />
+            <input name="sign" class="button" value="Login" type="submit" />
+        </p>
+    </form>
+{% else %}
+    <div id="info">
+        Hola, {{ user.username }}
+        <a href="/accounts/logout/">Log out</a>						
+    </div>
+{% endif %}

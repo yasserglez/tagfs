@@ -8,5 +8,6 @@
 <path>/TagFS/packages</path>
 <path>/TagFS/scripts</path>
 <path>/TagFS/packages/tagfs/contrib</path>
+<path>/TagFS/tests</path>
 </pydev_pathproperty>
 </pydev_project>

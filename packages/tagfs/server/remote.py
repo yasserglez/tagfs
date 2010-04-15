@@ -6,8 +6,12 @@ Implementación del servidor TagFS compartido en la red.
 
 import os
 
-import whoosh.index, whoosh.fields, whoosh.query, whoosh.qparser
 import sync
+import magic
+import whoosh.index
+import whoosh.fields
+import whoosh.query
+import whoosh.qparser
 
 
 class RemoteTagFSServer(object):
@@ -53,6 +57,7 @@ class RemoteTagFSServer(object):
             name=whoosh.fields.TEXT(stored=True),
             size=whoosh.fields.STORED(),
             path=whoosh.fields.STORED(),
+            type=whoosh.fields.STORED(),
         )
         index_dir = os.path.join(self._data_dir, 'index')
         if not os.path.isdir(index_dir):
@@ -176,6 +181,7 @@ class RemoteTagFSServer(object):
                 name=file_info['name'].decode(self._encoding),
                 size=file_info['size'].decode(self._encoding),
                 path=file_path.decode(self._encoding),
+                type=magic.whatis(file_data),
             )               
             writer.commit()
     
@@ -282,6 +288,7 @@ class RemoteTagFSServer(object):
                 info['description'] = doc['description']
                 info['name'] = doc['name']
                 info['size'] = doc['size']
+                info['type'] = doc['type']
                 return info
             else:
                 return None
