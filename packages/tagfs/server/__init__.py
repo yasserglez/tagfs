@@ -43,6 +43,7 @@ class TagFSServer(object):
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.
         """
+        self._continue = True
         self._remote = RemoteTagFSServer(data_dir, capacity)
         self._pyro_remote = Pyro.core.ObjBase()
         self._pyro_remote.delegateTo(self._remote)
@@ -77,15 +78,21 @@ class TagFSServer(object):
         """
         Inicia el ciclo principal del servidor TagFS.
         """
-        while True:
+        while self._continue:
             try:
                 self._daemon.handleRequests()
                 time.sleep(1)
             except KeyboardInterrupt:
                 # End the main loop with CTRL-C.
-                break
+                self._continue = False
         # Main loop of the daemon exited. Prepare to exit the program.
         self._remote.terminate()
         self._daemon.shutdown()
         self._zeroconf.unregisterService(self._zeroconf_service)
         self._zeroconf.close()
+        
+    def stop(self):
+        """
+        Detiene el ciclo principal del servidor TagFS.
+        """
+        self._continue=False
