@@ -13,6 +13,10 @@ import optparse
 PACKAGES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'packages'))
 sys.path.insert(0, PACKAGES_DIR)
 
+# Add the contrib directory to the Python path.
+CONTRIB_DIR = os.path.join(PACKAGES_DIR, 'tagfs', 'contrib')
+sys.path.insert(0, os.path.abspath(CONTRIB_DIR))
+
 from tagfs import  __version__, __authors__
 from tagfs.server import TagFSServer
 
