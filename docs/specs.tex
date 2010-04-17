@@ -9,7 +9,7 @@
 
 \title{
 	\LARGE{TagFS} \\
-	\Large{Especificación del Sistema}
+	\Large{Especificación del sistema}
 }
 
 \author{
@@ -45,18 +45,20 @@ etiquetas. En este contexto, los ficheros constituyen un recurso de particular
 importancia. 
 
 Basándonos en la idea anterior nuestro sistema pretende brindar una plataforma
-distribuida para manjear ficheros clasificados según etiquetas donde el acceso
+distribuida para manjear ficheros clasificados con etiquetas donde el acceso
 a los mismos este dado precisamente por las etiquetas que lo describen, de tal
 modo que el usuario pueda trabajar con los archivos como un sistema de ficheros
 clásico, pemitiendo buscar, añadir y eliminar los ficheros existentes en el
 sistema.
 
 Nuestro sistema esta compuesto por dos tipos de entidades:
+
 \begin{itemize}
   \item \emph{Servidor:} Representa a un lugar  donde serán almacenados los
   recursos. Realiza la búsqueda entre los ficheros que contiene, los almacena
   físicamente y los elimina, según sea la operación a realizar. En ningún caso
   se realiza una comunicación entre servidores.
+  
   \item \emph{Cliente:} Representa la forma de interacción del usuario con los
   recursos almacenados. Es el encargado de invocar una operación en el servidor
   y cuando sea necesario procesar los resultados que esta produzca. En ningún
@@ -68,59 +70,59 @@ cliente-servidor.
 
 Para lograr un sistema multiplataforma, capaz de funcionar independientemente
 del sistema operativo o las características de la máquina, decidimos que nuestro
-sistema fuera programado completamente en \emph{Python}. Por tatnto el único
-requisito para su funcionamiento es contar con \emph{Python 2.6} o una versión
-superior (de la rama 2.x).
+sistema fuera programado completamente en \emph{Python}. Por tanto, el único
+requisito para el funcionamiento es contar con \emph{Python 2.6} o una versión
+superior (de la rama \emph{2.x}) instalado en la máquina donde se quiera ejecutar 
+el sistema. No se requiere la instalación de módulos para \emph{Python},
+además de los provistos por su biblioteca \emph{standard}.
 
 \section{Modelo de comunicación}
 
 Para gestionar la comunicación entre las entidades de nuestro sistema,
-utilizamos una plataforma de Invocación Remota de Métodos (RMI\footnote{Remote
-Method  Invocation})llamada \emph{Pyro}\footnote{http://pyro.sourceforge.net/}
-que se ajusta con el modelo de comunicación \emph{ORB}\footnote{Object Request
-Broker}) visto durante el curso. Esta plataforma está implementada
-completamente en \emph{Python} y brinda una forma sencilla y transparente de
-usar la programación orientada a objetos entre entidades no necesariamente
-locales de nuestro sistema distribuido.
+utilizamos una plataforma RMI~\footnote{Remote Method Invocation} (Invocación 
+Remota de Métodos, en español) llamada 
+\emph{Pyro}~\footnote{http://pyro.sourceforge.net/} que se ajusta con el modelo 
+de comunicación \emph{ORB}~\footnote{Object Request Broker}) visto durante el 
+curso. Esta plataforma está implementada completamente en \emph{Python} y brinda 
+una forma sencilla y transparente de usar la programación orientada a objetos 
+entre entidades no necesariamente locales de nuestro sistema distribuido.
 
-Un elemento escencial de las plataformas RMI es el sistema de nombrado que usa
-la misma, en nuestro caso en particular \emph{Pyro} no permite tener más de dos
-servidores de nombrado en el sistema, lo que hace peligrar la tolerancia a
-fallas del mismo, pues lo convierte en un sistema con un componente
-centralizado. 
+Un elemento esencial de las plataformas RMI es el sistema de nombrado, en nuestro 
+caso en particular \emph{Pyro} no permite tener más de dos servidores de nombrado 
+en el sistema, lo que hace peligrar la tolerancia a fallas del mismo, pues lo 
+convierte en un sistema con componentes centralizados. 
 
-Para mantener nuestro sistema totalmente distribuido, decidimos
-no utilizar el sistema de nombrado de \emph{Pyro}, sino utilizar una
-herramienta de \emph{auto-descubrimiento} que nos permite descubrir
-automáticamente los servidores de nuestro sistema en la red, además de
-notificarnos ante la aparición o desaparición de alguno de estos. Con este fin
-utilizamos una implementación en \emph{Python} de \emph{Zeroconf}.
+Para mantener nuestro sistema totalmente distribuido, decidimos no utilizar el 
+sistema de nombrado de \emph{Pyro}, sino utilizar una herramienta de 
+\emph{auto-descubrimiento} que nos permita localizar automáticamente los 
+servidores de nuestro sistema en la red, además de notificarnos ante la 
+aparición o desaparición de alguno de estos. Con este fin, utilizamos una 
+implementación en \emph{Python} de \emph{Zeroconf}.
 
 \section{Comportamiento y tolerancia a la ocurrencia de fallas}
 
-Como expresamos en la sección anterior nuestro sistema es totalmente
-distribuido sin ningún elemento centralizado que pueda hacer peligrar la
+Como expresamos en la sección anterior, nuestro sistema es totalmente
+distribuido; sin ningún elemento centralizado que pueda hacer peligrar la
 estabilidad del mismo ante alguna falla. Ante una falla de un servidor durante
 una interacción cliente-servidor, el cliente será notificado de la falla
 ocurrida.
 
-De igual manera nuestro sistema permite replicar los ficheros en el sistema en
-un porciento de los servidores disponibles determinado por el cliente de
-manera tal que, de acuerdo con la disponibilidad de recursos en el sistema,
-ante la falla de un servidor, los ficheros no dejen de estar disponibles. Es
-importante notar que si el sistema tiene un porciento de replicación pequeño
-pueden dejar de estar disponibles algunos ficheros ante la falla de un
-servidor, pero en cualquier caso ningún cliente obtendrá estos ficheros como
-resultados de una búsqueda.
+Nuestro sistema permite replicar los ficheros en el sistema en un porciento de 
+los servidores disponibles; de manera tal que, de acuerdo con la disponibilidad 
+de recursos en el sistema, ante la falla de un servidor los ficheros no dejen de 
+estar disponibles. Es importante notar que si el sistema tiene un porciento de 
+replicación pequeño pueden dejar de estar disponibles algunos ficheros ante la 
+falla de un servidor, pero en cualquier caso ningún cliente obtendrá estos 
+ficheros como resultados de una búsqueda.
 
 \section{Entidades del sistema}
 
 En nuestro sistema se manejan tres conceptos fundamentales: ficheros, clientes
 y servidores. A continuación se exponen las características de cada uno. Las
 operaciones relativas al funcionamiento de la plataforma de comunicación se
-omiten en este documento, pero pueden ser consultadas en en la
-\emph{Documentación del API}\footnote{Este documento se encuentra en
-elaboración} de nuestro proyecto.
+omiten en este documento, pero pueden ser consultadas en la
+\emph{Documentación del API}~\footnote{Este documento se encuentra actualmente 
+en elaboración} de nuestro proyecto.
 
 \subsection{Ficheros}
 
@@ -130,13 +132,19 @@ Para nuestro sistema un fichero está compuesto de los siguientes elementos:
   \item \emph{Tags}: Este elemento contiene las etiquetas que caracterizan un
   fichero en nuestro sistema. Estas etiquetas constituyen la principal forma de
   búsqueda de nuestro sistema.
-  \item \emph{Description}: Este elemento contiene un texto libre, que describ
-  a al fichero en cuestión. La descripción del fichero solo se tiene en cuenta
-  en caso de realizar una búsqueda de texto libre en el sistema.
+  
+  \item \emph{Description}: Este elemento contiene un texto libre que describe
+  al fichero. La descripción del fichero solo se tiene en cuenta en caso de 
+  realizar una búsqueda de texto libre en el sistema.
+  
   \item \emph{Name}: Nombre del fichero en el sistema de ficheros de origen.
+  
   \item \emph{Content}: Contenido (tratados como binarios) del fichero.
+  
   \item \emph{Type}: Tipo (MIME Type) del fichero.
+  
   \item \emph{Owner}: Usuario que añadió el fichero al sistema.
+  
   \item \emph{Group}: Grupo del usuario que añadió este fichero.
 \end{itemize} 
 
@@ -147,21 +155,26 @@ momento el último en añadirse.
 
 \subsection{Clientes}
 
-Un cliente de nuestro sistema es una entidad que va a acceder al sistema para
-comunicarse con los servidores que se encuentran disponibles, realizar alguna
-operación en los mismos e interpretar los resultados. Un cliente puede realizar
-las operaciones siguientes:
+Un cliente es una entidad que va a acceder al sistema para comunicarse con los 
+servidores que se encuentran disponibles, realizar alguna operación en los 
+mismos e interpretar los resultados.
+
+Un cliente puede realizar las operaciones siguientes:
 
 \begin{itemize}
   \item \emph{Put}: Esta operación añade un fichero al sistema con
   un porciento de replicación, que representa en que porciento de los
   servidores disponibles se almacenará el fichero.
+  
   \item \emph{Get}: Esta operación obtiene el contenido de un fichero específico
   de nuestro sistema a partir del identificador unívoco que lo representa.
+  
   \item \emph{Remove}: Esta operación elimina un fichero del sistema a partir
   del identificador unívoco que lo representa.
+  
   \item \emph{List}: Esta operación lista todos los ficheros de nuestro sistema
   que contengan todas las etiquetas dadas.
+  
   \item \emph{Search}: Esta operación busca un texto libre sobre los datos
   de los ficheros almacenados en todos los servidores y devolviendo los
   ficheros que contienen los términos a buscar en alguno de sus metadatos (en
@@ -169,6 +182,7 @@ las operaciones siguientes:
   usarse una consulta que contengan los operadores lógicos \verb|OR| y
   \verb|AND| entre otras opciones. Esta búsqueda se realiza de modo
   distribuido.
+  
   \item \emph{Info}: Esta operación obtiene los metadatos de un fichero
   específico almacenado en el sistema.
 \end{itemize}
@@ -186,27 +200,33 @@ de nuestro proyecto.
 \subsection{Servidores}
 
 Un servidor de nuestro sistema es una entidad que almacena, gestiona ficheros
-e interactua con los clientes. Un servidor puede realizar las siguientes
+e interactúa con los clientes. Un servidor puede realizar las siguientes
 operaciones:
 
 \begin{itemize}
   \item \emph{Status}: Esta operación brinda información relativa al estado del
   servidor, tales como la capacidad y el espacio disponible en el mismo.
+  
   \item \emph{Put}: Esta operación almacena físicamente un fichero en el 
   servidor. En caso de que exista un fichero con el mismo identificador
-  unívoco, solo serán remplazados si el usuario tiene permisos de escrituras
+  unívoco, sólo serán remplazados si el usuario tiene permisos de escrituras
   sobre el que se encuentre almacenado.
+  
   \item \emph{Get}: Esta operación obtiene el contenido de un fichero específico
   de nuestro sistema a partir el identificador unívoco que lo representa.
+  
   \item \emph{Remove}: Esta operación elimina un fichero del servidor a partir
   el identificador unívoco que lo representa. Para realizar esta operación el
   usuario deberá tener permisos de escrituras sobre el archivo.
+  
   \item \emph{List}: Esta operación lista todos los ficheros del servidor que
   contengan todas las etiquetas dadas.
+  
   \item \emph{Search}: Esta operación busca un texto libre sobre los datos
-  de los ficheros almacenados en el servidores y devolve los ficheros que
+  de los ficheros almacenados en el servidores y devuelve los ficheros que
   contienen los términos a buscar en alguno de sus metadatos (en esta búsqueda
   se excluye el contenido del fichero).
+  
   \item \emph{Info}: Esta operación obtiene los elementos de un fichero
   específico almacenado en el servidor.
 \end{itemize}
