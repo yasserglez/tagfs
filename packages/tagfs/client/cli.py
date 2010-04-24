@@ -4,6 +4,7 @@
 Implementación de un cliente TagFS para la línea de comandos.
 """
 
+import shlex
 import textwrap
 
 try:
@@ -52,9 +53,9 @@ class CLITagFSClient(TagFSClient):
                 prompt = 'TagFS:{cwd}> '.format(cwd=self._cwd)
                 user_input = raw_input(prompt)
                 cmd = user_input.split()[0]
-                args = user_input[len(cmd):].lstrip()
                 try:
                     func = getattr(self, '_command_{cmd}'.format(cmd=cmd))
+                    args = shlex.split(user_input[len(cmd):].lstrip())
                     func(args)
                 except AttributeError:
                     print '\nInvalid command "{cmd}".\n'.format(cmd=cmd)
@@ -85,7 +86,7 @@ class CLITagFSClient(TagFSClient):
         Usage: help [command]
         
         Prints information about the usage of a command. If it is executed
-        without a command as argument it prints the available cmds.
+        without a command as argument it prints the available commands.
         """
         if not args:
             cmds = []
@@ -97,7 +98,7 @@ class CLITagFSClient(TagFSClient):
             print '\n{msg}\n'.format(msg='\n'.join(multiple_lines))
         else:
             try:
-                func = getattr(self, '_command_{cmd}'.format(cmd=args))
+                func = getattr(self, '_command_{cmd}'.format(cmd=args[0]))
                 print textwrap.dedent(func.__doc__)
             except AttributeError:
-                print '\nInvalid command "{cmd}".\n'.format(cmd=args)
+                print '\nInvalid command "{cmd}".\n'.format(cmd=args[0])
