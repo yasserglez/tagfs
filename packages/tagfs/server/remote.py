@@ -55,6 +55,9 @@ class RemoteTagFSServer(object):
                                        scorable=True, field_boost=2.0),
             description=whoosh.fields.TEXT(stored=True),
             name=whoosh.fields.TEXT(stored=True),
+            owner=whoosh.fields.STORED(),
+            group=whoosh.fields.STORED(),
+            perms=whoosh.fields.STORED(),
             size=whoosh.fields.STORED(),
             path=whoosh.fields.STORED(),
             type=whoosh.fields.STORED(),
@@ -127,9 +130,10 @@ class RemoteTagFSServer(object):
         Obtiene el contenido del archivo identificado por C{file_hash}
         
         @type file_hash: C{str}
-        @param file_hash: Hash del contenido del archivo cuyos datos
-            se quiere obtener. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuidos.
+        @param file_hash: Identificador del archivo cuyos datos se quiere 
+            obtener. Este hash identifica al archivo únicamente dentro del 
+            sistema de ficheros distribuidos, a partir de sus etiquetas y 
+            su nombre.
             
         @rtype: C{str}
         @return: Contenido del archivo identificado por C{file_hash} si
@@ -180,6 +184,9 @@ class RemoteTagFSServer(object):
                 description=file_info['description'].decode(self._encoding),
                 name=file_info['name'].decode(self._encoding),
                 size=file_info['size'].decode(self._encoding),
+                owner=file_info['owner'].decode(self._encoding),
+                group=file_info['group'].decode(self._encoding),
+                perms=file_info['perms'].decode(self._encoding),
                 path=file_path.decode(self._encoding),
                 type=magic.whatis(file_data),
             )               
@@ -197,9 +204,9 @@ class RemoteTagFSServer(object):
         no se realizará ninguna acción.
         
         @type file_hash: C{str}
-        @param file_hash: Hash del contenido del archivo que se quiere
-            eliminar. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuido.
+        @param file_hash: Identificador del archivo que se quiere eliminar. 
+            Este hash identifica al archivo únicamente dentro del sistema de 
+            ficheros distribuido a partir de sus etiquetas y su nombre.
         """
         self._mrsw_lock.write_in()
         try:
@@ -261,16 +268,16 @@ class RemoteTagFSServer(object):
             return set([result['hash'] for result in searcher.search(query)])
         finally:
             self._mrsw_lock.read_out()
-        
-                        
+                                   
     def info(self, file_hash):
         """
         Obtiene información a partir del hash de un archivo.
         
         @type file_hash: C{str}
-        @param file_hash: Hash del contenido del archivo cuya información
-            se quiere obtener. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuidos.
+        @param file_hash: Identificador del archivo cuya información se quiere 
+            obtener. Este hash identifica al archivo únicamente dentro del 
+            sistema de ficheros distribuidos a partir de sus etiquetas y su 
+            nombre.
             
         @rtype: C{dict}
         @return: Diccionario con los metadatos del archivo si este servidor
@@ -294,6 +301,17 @@ class RemoteTagFSServer(object):
                 return None
         finally:
             self._mrsw_lock.read_out()        
+            
+    def get_all_tags(self):
+        """
+        Obtiene un conjunto con todas las tags que tiene algún archivo 
+        almacenado en este servidor.
+        
+        @rtype: C{set}
+        @return: Conjunto con las etiquetas en este servidor.
+        """
+        tags = []
+        return set(tags)
         
     def terminate(self):
         """

@@ -281,3 +281,22 @@ class TagFSClient(object):
                     # Ignoring any exception here.
                     pass
         return None
+    
+    def get_all_tags(self):
+        """
+        Obtiene un conjunto con todas las tags que tiene algún archivo 
+        almacenado en el sistema.
+        
+        @rtype: C{set}
+        @return: Conjunto con los nombres de las etiquetas del sistema.
+        """
+        all_results = set()
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    server_results = server.get_all_tags()
+                    all_results |= server_results
+                except Exception:
+                    # Ignoring any exception here.
+                    pass                    
+        return all_results
