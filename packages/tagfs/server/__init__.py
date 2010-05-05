@@ -4,7 +4,6 @@
 Implementación del servidor de TagFS.
 """
 
-import time
 import socket
 
 import Zeroconf
@@ -23,11 +22,6 @@ class TagFSServer(object):
         """
         Inicializa una instancia de un servidor de TagFS.
         
-        Solamente debe existir una instancia de esta clase en cada proceso
-        ejecutando un servidor TagFS, debido a restricciones relacionadas con las 
-        bibliotecas utilizadas para implementar el descubrimiento automático de 
-        los servidores TagFS disponibles en la red.
-        
         @type address: C{str}
         @param address: Dirección IP de la interfaz donde debe escuchar esta
            instancia del servidor de TagFS.
@@ -44,23 +38,21 @@ class TagFSServer(object):
             capacidad.
         """
         self._continue = True
+        self._sleep_time = 1
+        self._address = address
         self._remote = RemoteTagFSServer(data_dir, capacity)
         self._pyro_remote = Pyro.core.ObjBase()
         self._pyro_remote.delegateTo(self._remote)
-        self.init_pyro(address)
+        self.init_pyro()
         self.init_autodiscovery()
         
-    def init_pyro(self, address):
+    def init_pyro(self):
         """
         Inicializa el método utilizado para exportar las funcionalidades del 
         servidor TagFS a los clientes de la red.
-        
-        @type address: C{str}
-        @param address: Dirección IP de la interfaz donde debe escuchar esta
-           instancia del servidor de TagFS.
         """
         Pyro.core.initServer()
-        self._daemon = Pyro.core.Daemon(host=address)
+        self._daemon = Pyro.core.Daemon(host=self._address)
         self._pyro_uri = self._daemon.connect(self._pyro_remote, 'tagfs')
         
     def init_autodiscovery(self):
@@ -80,8 +72,7 @@ class TagFSServer(object):
         """
         while self._continue:
             try:
-                self._daemon.handleRequests()
-                time.sleep(1)
+                self._daemon.handleRequests(timeout=self._sleep_time)
             except KeyboardInterrupt:
                 # End the main loop with CTRL-C.
                 self._continue = False
@@ -95,4 +86,4 @@ class TagFSServer(object):
         """
         Detiene el ciclo principal del servidor TagFS.
         """
-        self._continue=False
+        self._continue = False

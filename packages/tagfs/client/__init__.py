@@ -12,6 +12,7 @@ import Zeroconf
 import Pyro.core
 
 from tagfs.common import ZEROCONF_SERVICE_TYPE
+from tagfs.server import TagFSServer
 
 
 class TagFSClient(object):
@@ -19,21 +20,39 @@ class TagFSClient(object):
     Clase base de los clientes de TagFS.
     """
     
-    def __init__(self, address):
+    def __init__(self, address, data_dir, capacity):
         """
         Inicializa una instancia de un cliente TagFS.
         
-        Solamente debe existir una instancia de esta clase en cada proceso
-        ejecutando un cliente TagFS, debido a restricciones relacionadas con 
-        las bibliotecas utilizadas para implementar el descubrimiento 
-        automático de los servidores TagFS disponibles en la red.
-        
         @type address: C{str}
         @param address: Dirección IP de la interfaz de red que se debe utilizar
-           para comunicarse con los servidores TagFS.
+           para comunicarse con los servidores TagFS y en la que debe escuchar
+           el servidor que se ejecutará en este cliente.
+           
+        @type data_dir: C{str}
+        @param data_dir: Ruta absoluta al directorio utilizado para almacenar
+            los archivos y otros datos relacionados con el funcionamiento
+            del servidor.
+            
+        @type capacity: C{int}
+        @param capacity: Capacidad de almacenamiento en bytes de este servidor.
+            TagFS garantizará que la capacidad utilizada por todos los
+            archivos almacenados en este servidor no sobrepasará esta
+            capacidad.  
         """
         self._address = address
+        self._data_dir = data_dir
+        self._capacity = capacity
+        self.init_server()
         self.init_autodiscovery()
+        
+    def init_server(self):
+        """
+        Inicializa el servidor ejecutado por este cliente.
+        """
+        self._server = TagFSServer(self._address, self._data_dir, self._capacity)
+        self._server_thread = threading.Thread(target=self._server.start)
+        self._server_thread.start()
         
     def init_autodiscovery(self):
         """
@@ -51,6 +70,8 @@ class TagFSClient(object):
         Termina la ejecución del client TagFS. Despues de ejecutado este método 
         no se debe hacer ningún llamado a los métodos de esta instancia.
         """
+        self._server.stop()
+        self._server_thread.join()
         self._zeroconf.close()
         
     def server_added(self, zeroconf, service_type, service_name):

@@ -25,7 +25,7 @@ class CLITagFSClient(TagFSClient):
     Este cliente emula el funcionamiento de un sistema de ficheros tradicional.
     """
 
-    def __init__(self, address, replication):
+    def __init__(self, address, data_dir, capacity, replication):
         """
         Inicializa el cliente TagFS para la línea de comandos. Consulte
         la documentación del método C{__init__} de la clase C{TagFSClient}
@@ -37,7 +37,7 @@ class CLITagFSClient(TagFSClient):
             que se debe utilizar para los nuevos archivos añadidos utilizando 
             este cliente de TagFS.        
         """
-        super(CLITagFSClient, self).__init__(address)
+        super(CLITagFSClient, self).__init__(address, data_dir, capacity)
         self._replication = replication
         self._continue = True
         self._cwd = '/'
