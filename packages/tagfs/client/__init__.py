@@ -236,7 +236,6 @@ class TagFSClient(object):
             for server in self._servers.itervalues():
                 try:
                     server_results = server.list(tags)
-                    print server_results
                     all_results |= server_results
                 except Exception:
                     # Ignoring any exception here.

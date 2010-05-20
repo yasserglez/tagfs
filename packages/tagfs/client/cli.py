@@ -129,7 +129,6 @@ class CLITagFSClient(TagFSClient):
         local_file1, local_file2 = None, None
         if args[0].startswith("local:"):
             try:
-                print args[0][6:]
                 local_file1 = open(args[0][6:], 'rb')
                 file1 = local_file1.read()
             except Exception:
@@ -140,7 +139,8 @@ class CLITagFSClient(TagFSClient):
                 path = args[0][7:]
             else:
                 path = args[0]
-        
+                path = self._get_absolute(path)
+                
             name = path[path.rfind('/')+1:]
             path_tags = self._get_tags(path)
             infos = [self.info(hash) for hash in self.list(path_tags)]
@@ -177,8 +177,7 @@ class CLITagFSClient(TagFSClient):
             except Exception:
                 print error_msg.format(command='cp', 
                                        msg='Unable to access {0}'.format(args[1]))
-        print 'out'
-        
+                        
     def _command_rm(self, args):
         """
         Usage: rm file
@@ -194,35 +193,35 @@ class CLITagFSClient(TagFSClient):
         Changes the current directory. If it is executed without a directory
         as arguments it changes the current directory for /.
         """ 
-        error_msg = '{command}: {file}: {msg}.' 
+        error_msg = '{command}: {file}: {msg}.'
+        path = ""
+        path_tags = set() 
         if not args:
-            self._cwd = "/"
-            all_tags = self.get_all_tags() 
-            self._cwd_elements = dict(zip(all_tags,len(all_tags)*[(None,True)]))
+            path = "/"
+        elif args[0] == "..":
+            index = self._cwd[:-1].rindex('/')
+            path = self._cwd[:index+1]
+            path_tags = self._get_tags(path)
         else:
-            cwd_elements = {}
-            path = ""
-            path_tags = set()
-            if args[0] == "..":
-                index = self._cwd[:-1].rindex('/')
-                path = self._cwd[:index]
-                path_tags = self._get_tags(path)
+            if not args[0].endswith('/'):
+                args[0] = args[0]+'/'
+            path = self._get_absolute(args[0])
+            path_tags = self._get_tags(path)
+        
+        all_tags = self.get_all_tags()
+        
+        if (path == '/' or 
+            (len(self._empty_dirs) > 0 and 
+             (path_tags - all_tags).issubset(self._empty_dirs))):
+            self._cwd = path
+        else:
+            infos = [self.info(hash) for hash in self.list(path_tags)]
+            if not infos:
+                print error_msg.format(command='cd', file=args[0], 
+                                       msg='Not such file or directory')
             else:
-                if not args[0].endswith('/'):
-                    args[0] = args[0]+'/'
-                path = self._get_absolute(args[0])
-                path_tags = self._get_tags(path)
-            all_tags = self.get_all_tags()
-            if (path_tags - all_tags).issubset(self._empty_dirs):
                 self._cwd = path
-            else:
-                infos = [self.info(hash) for hash in self.list(path_tags)]
-                if not infos:
-                    print error_msg.format(command='cd', file=args[0], 
-                                           msg='Not such file or directory')
-                else:
-                    self._cwd = path
-    
+
     def _command_mkdir(self, args):
         """
         Usage: mkdir directory
@@ -267,15 +266,19 @@ class CLITagFSClient(TagFSClient):
         error_msg = '{command}: {file}: {msg}.'
         if not args:
             path = self._cwd
+        else:
+            path = self._get_absolute(args[0])
+            
+        if path == '/':
             all_tags = self.get_all_tags()
             for dir in all_tags | self._empty_dirs:
                 elements[dir] = (None, True)
         else:
-            path = self._get_absolute(args[0])
             path_tags = self._get_tags(path)
             all_tags = self.get_all_tags()
             tags = set(all_tags)
-            if (path_tags - all_tags).issubset(self._empty_dirs):
+            if (len(self._empty_dirs) > 0 and 
+                (path_tags - all_tags).issubset(self._empty_dirs)):
                 for dir in (self._empty_dirs - (path_tags - all_tags)):
                     elements[dir] = (None, True)
             else:
