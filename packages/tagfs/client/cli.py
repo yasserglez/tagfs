@@ -135,7 +135,7 @@ class CLITagFSClient(TagFSClient):
                 print error_msg.format(command='cp', 
                                        msg='Unable to access {0}'.format(args[0]))
         else:
-            if args[0].startswith("source:"):
+            if args[0].startswith("remote:"):
                 path = args[0][7:]
             else:
                 path = args[0]
@@ -164,16 +164,18 @@ class CLITagFSClient(TagFSClient):
                 print error_msg.format(command='cp', 
                                        msg='Unable to access {0}'.format(args[1]))
         else:
-            if args[1].startswith("source:"):
+            if args[1].startswith("remote:"):
                 path = args[1][7:]
             else:
                 path = args[1]
+                path = self._get_absolute(path)
             name = path[path.rfind('/')+1:]
             path_tags = self._get_tags(path)
 
             try:
                 self.put(name, self._description, path_tags, self._user, 
                          self._group, 775, file1)
+                self._empty_dirs.difference_update(path_tags)
             except Exception:
                 print error_msg.format(command='cp', 
                                        msg='Unable to access {0}'.format(args[1]))
@@ -276,7 +278,7 @@ class CLITagFSClient(TagFSClient):
         else:
             path_tags = self._get_tags(path)
             all_tags = self.get_all_tags()
-            tags = set(all_tags)
+            tags = set()
             if (len(self._empty_dirs) > 0 and 
                 (path_tags - all_tags).issubset(self._empty_dirs)):
                 for dir in (self._empty_dirs - (path_tags - all_tags)):
