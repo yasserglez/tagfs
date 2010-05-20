@@ -5,7 +5,6 @@ Implementación de los clientes TagFS.
 """
 
 import random
-import hashlib
 import threading
 
 import Zeroconf
@@ -94,7 +93,7 @@ class TagFSClient(object):
             pyro_uri = service_name[:-(len(service_type) + 1)]
             del self._servers[pyro_uri]
 
-    def put(self, name, description, tags, data, replication):
+    def put(self, name, description, tags, owner, group, perms, data, replication):
         """
         Añade un nuevo archivo al sistema de ficheros distribuido.
         
@@ -115,6 +114,15 @@ class TagFSClient(object):
         @param tags: Conjunto de tags que se deben asociar a este archivo. Cada 
             tag debe ser una palabra y no debe contener espacios. Será posible 
             relizar búsquedas en el sistema distribuido introduciendo tags.
+            
+        @type owner: C{str}
+        @param owner: Usuario que va a ser el dueño del fichero.
+        
+        @type group: C{str}
+        @param group: Grupo del fichero.
+        
+        @type perms: C{int}
+        @param perms: Permisos del fichero.
 
         @type data: C{str}
         @param data: Contenido del archivo.
@@ -142,14 +150,15 @@ class TagFSClient(object):
             servers = random.sample(servers, min(len(servers), num_servers))
             
             # Collect the metadata of the file.
-            md5_hash = hashlib.new('md5')
-            md5_hash.update(data)
             info = {}
-            info['hash'] = md5_hash.hexdigest()
             info['tags'] = tags
             info['description'] = description
             info['name'] = name
             info['size'] = str(size)
+            info['owner'] = owner
+            info['group'] = group
+            info['perms'] = str(perms)
+            
             
             # Save the file in each selected server.
             saved = False
@@ -227,6 +236,7 @@ class TagFSClient(object):
             for server in self._servers.itervalues():
                 try:
                     server_results = server.list(tags)
+                    print server_results
                     all_results |= server_results
                 except Exception:
                     # Ignoring any exception here.
@@ -298,5 +308,36 @@ class TagFSClient(object):
                     all_results |= server_results
                 except Exception:
                     # Ignoring any exception here.
-                    pass                    
+                    pass
         return all_results
+
+    def get_popular_tags(self, number):
+        """
+        Obtiene un conjunto con los tags más populares del sistema.
+        
+        @type number: C{int}
+        @param number: Cantidad de tags populares deseadas.
+        
+        @rtype: C{set}
+        @return: Conjunto con los nombres de las etiquetas del sistema.
+        """
+        all_results = {}
+        result = []
+        with self._servers_mutex:
+            for server in self._servers.itervalues():
+                try:
+                    server_results = server.get_popular_tags(number)
+                    for frequency, tag in server_results:
+                        if tag in all_results:
+                            all_results[tag].append(frequency)
+                        else:
+                            all_results[tag] = [frequency]
+                except Exception:
+                    # Ignoring any exception here.
+                    pass
+        for tag,frequencys in all_results.iteritems():
+            result = (sum(frequencys)/len(frequencys), tag)
+        result.sort()
+        return set([tag for _,tag in result[:number]])
+        
+        

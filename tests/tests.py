@@ -74,7 +74,7 @@ class Test(unittest.TestCase):
             thread.join()
         self._client.terminate()
 
-    def testName(self):
+    def testAmbient(self):
         pass
 
 
