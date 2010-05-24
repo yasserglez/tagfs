@@ -186,7 +186,36 @@ class CLITagFSClient(TagFSClient):
         
         Removes the file of the system.
         """
-        print self.list(args)
+        error_msg = '{command}: {msg}.'
+        error = None
+        path = ""
+        name = ""
+        if not args:
+            error = error_msg.format(command='rm',msg='Missing operand')
+            error += '\nTry "help {command}" for more information.'.format(command='rm')
+        if not error:
+            path = self._get_absolute(args[0])
+            if path.endswith('/'):
+                error =  error_msg.format(command='rm',  
+                                          msg='cannot remove {0}: Is a directory')
+        if not error:
+            name = path[path.rfind('/')+1:]
+            path_tags = self._get_tags(path)
+            if len(path_tags) == 0:
+                error = error_msg.format(command='rm',  
+                                         msg='cannot remove {0}: No such file or directory')
+        if not error:
+            infos = [self.info(hash) for hash in self.list(path_tags)]
+            if not infos:
+                error = error_msg.format(command='rm',  
+                                         msg='cannot remove {0}: No such file or directory')
+        if not error:
+            for info in infos:
+                if info['name'] == name:
+                    self.remove(info['hash'])
+                    print 'removed {0}.'.format(name)
+        else:
+            print error
     
     def _command_cd(self, args):
         """
@@ -231,10 +260,11 @@ class CLITagFSClient(TagFSClient):
         Creates the directory if not exists.
         """
         error_msg = '{command}: {msg}.'
+        error =  None
         if not args:
-            print error_msg.format(command='mkdir',msg='Missing operand')
-            print 'Try "help {command}" for more information.'.format(command='mkdir')
-        else:
+            error = error_msg.format(command='mkdir',msg='Missing operand')
+            error += '\nTry "help {command}" for more information.'.format(command='mkdir')
+        if not error:
             if not args[0].endswith('/'):
                 args[0] = args[0]+'/'
             path = self._get_absolute(args[0])
@@ -247,15 +277,17 @@ class CLITagFSClient(TagFSClient):
             
             if tags.issubset(all_dirs):
                 if dir_name in all_dirs:
-                    msg = error_msg.format(command='mkdir',msg=' Cannot create directory {file}: {reason}')
-                    msg = msg.format(file=dir_name, reason='File exists')
-                    print msg
+                    error = error_msg.format(command='mkdir',
+                                             msg=' Cannot create directory {file}: {reason}')
+                    error = error.format(file=dir_name, reason='File exists')
                 else: 
                     self._empty_dirs.add(dir_name)
             else:
-                msg = error_msg.format(msg=' Cannot create directory {file}: {reason}')
-                msg = msg.format(file=args[0], reason='Not such file or directory')
-                print msg
+                error = error_msg.format(command = 'mkdir', 
+                                         msg=' Cannot create directory {file}: {reason}')
+                error = error.format(file=args[0], reason='Not such file or directory')
+        if error:
+            print error
         
     def _command_ls(self, args):
         """
