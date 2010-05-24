@@ -5,6 +5,7 @@ Implementación del servidor TagFS compartido en la red.
 """
 
 import os
+import hashlib
 
 import sync
 import magic
@@ -35,6 +36,7 @@ class RemoteTagFSServer(object):
             capacidad.
         """
         self._data_dir = data_dir
+        self._file = open("/home/gnuaha7/log",'w')
         if not os.path.isdir(self._data_dir):
             os.mkdir(self._data_dir)
         self._init_index()
@@ -55,6 +57,9 @@ class RemoteTagFSServer(object):
                                        scorable=True, field_boost=2.0),
             description=whoosh.fields.TEXT(stored=True),
             name=whoosh.fields.TEXT(stored=True),
+            owner=whoosh.fields.STORED(),
+            group=whoosh.fields.STORED(),
+            perms=whoosh.fields.STORED(),
             size=whoosh.fields.STORED(),
             path=whoosh.fields.STORED(),
             type=whoosh.fields.STORED(),
@@ -127,9 +132,10 @@ class RemoteTagFSServer(object):
         Obtiene el contenido del archivo identificado por C{file_hash}
         
         @type file_hash: C{str}
-        @param file_hash: Hash del contenido del archivo cuyos datos
-            se quiere obtener. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuidos.
+        @param file_hash: Identificador del archivo cuyos datos se quiere 
+            obtener. Este hash identifica al archivo únicamente dentro del 
+            sistema de ficheros distribuidos, a partir de sus etiquetas y 
+            su nombre.
             
         @rtype: C{str}
         @return: Contenido del archivo identificado por C{file_hash} si
@@ -142,7 +148,7 @@ class RemoteTagFSServer(object):
             doc = searcher.document(hash=file_hash.decode(self._encoding))
             if doc is not None:
                 file_path = os.path.join(self._files_dir, doc['path'])
-                with open(file_path) as file:
+                with open(file_path, 'rb') as file:
                     return file.read()
             else:
                 return None
@@ -163,7 +169,11 @@ class RemoteTagFSServer(object):
         self._mrsw_lock.write_in()
         try:
             # Save the file in the files directory.
-            file_name, file_hash = file_info['name'], file_info['hash']
+            file_name = file_info['name']
+            self._file.write(file_name)
+            file_hash = hashlib.md5(u' ' .join([tag.decode(self._encoding) 
+                                              for tag in file_info['tags']]) 
+                                    + file_name.decode(self._encoding)).hexdigest()
             file_path = os.path.join(self._files_dir, os.path.sep.join(file_hash[0:5]), file_name)
             if not os.path.isdir(os.path.dirname(file_path)):
                 os.makedirs(os.path.dirname(file_path))
@@ -175,11 +185,14 @@ class RemoteTagFSServer(object):
             writer = self._index.writer()
             writer.delete_by_term('hash', file_hash.decode(self._encoding))
             writer.add_document(
-                hash=file_info['hash'].decode(self._encoding),
+                hash=file_hash.decode(self._encoding),
                 tags=u' '.join([tag.decode(self._encoding) for tag in file_info['tags']]),
                 description=file_info['description'].decode(self._encoding),
                 name=file_info['name'].decode(self._encoding),
                 size=file_info['size'].decode(self._encoding),
+                owner=file_info['owner'].decode(self._encoding),
+                group=file_info['group'].decode(self._encoding),
+                perms=file_info['perms'].decode(self._encoding),
                 path=file_path.decode(self._encoding),
                 type=magic.whatis(file_data),
             )               
@@ -197,9 +210,9 @@ class RemoteTagFSServer(object):
         no se realizará ninguna acción.
         
         @type file_hash: C{str}
-        @param file_hash: Hash del contenido del archivo que se quiere
-            eliminar. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuido.
+        @param file_hash: Identificador del archivo que se quiere eliminar. 
+            Este hash identifica al archivo únicamente dentro del sistema de 
+            ficheros distribuido a partir de sus etiquetas y su nombre.
         """
         self._mrsw_lock.write_in()
         try:
@@ -261,16 +274,16 @@ class RemoteTagFSServer(object):
             return set([result['hash'] for result in searcher.search(query)])
         finally:
             self._mrsw_lock.read_out()
-        
-                        
+                                   
     def info(self, file_hash):
         """
         Obtiene información a partir del hash de un archivo.
         
         @type file_hash: C{str}
-        @param file_hash: Hash del contenido del archivo cuya información
-            se quiere obtener. Este hash identifica al archivo únicamente
-            dentro del sistema de ficheros distribuidos.
+        @param file_hash: Identificador del archivo cuya información se quiere 
+            obtener. Este hash identifica al archivo únicamente dentro del 
+            sistema de ficheros distribuidos a partir de sus etiquetas y su 
+            nombre.
             
         @rtype: C{dict}
         @return: Diccionario con los metadatos del archivo si este servidor
@@ -289,11 +302,42 @@ class RemoteTagFSServer(object):
                 info['name'] = doc['name']
                 info['size'] = doc['size']
                 info['type'] = doc['type']
+                info['owner'] = doc['owner']
+                info['group'] = doc['group']
+                info['perms'] = doc['perms']
                 return info
             else:
                 return None
         finally:
             self._mrsw_lock.read_out()        
+            
+    def get_all_tags(self):
+        """
+        Obtiene un conjunto con todas los tags que tiene algún archivo 
+        almacenado en este servidor.
+        
+        @rtype: C{set}
+        @return: Conjunto con las etiquetas en este servidor.
+        """
+        reader = self._index.reader()
+        tags = set()
+        for tag in reader.lexicon('tags'):
+            tags.add(tag)
+        return tags
+    
+    def get_popular_tags(self, number):
+        """
+        Obtiene un conjunto con los tags más populares de los archivos 
+        almacenados en este servidor.
+        
+        @type number: C{int}
+        @param number: Cantidad de tags populares deseadas.
+        
+        @rtype: C{set}
+        @return: Conjunto de tuplas de la forma (frecuencia, tag) 
+        """
+        reader = self._index.reader()
+        return set(reader.most_distinctive_terms('tags', number))
         
     def terminate(self):
         """
