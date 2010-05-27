@@ -79,10 +79,10 @@ class TagFS(unittest.TestCase):
         for client_data_dir in self._client_data_dirs:
             shutil.rmtree(client_data_dir)
 
-    def test_a(self):
+    def testA(self):
         pass
     
-    def test_b(self):
+    def testB(self):
         pass
     
 

@@ -36,7 +36,6 @@ class RemoteTagFSServer(object):
             capacidad.
         """
         self._data_dir = data_dir
-        self._file = open("/home/gnuaha7/log",'w')
         if not os.path.isdir(self._data_dir):
             os.mkdir(self._data_dir)
         self._init_index()
@@ -70,8 +69,6 @@ class RemoteTagFSServer(object):
             self._index = whoosh.index.create_in(index_dir, self._index_schema)
         else:
             self._index = whoosh.index.open_dir(index_dir)
-        if self._index.doc_count() > 0:
-            self._index.optimize()
         
     def _init_files(self):
         """
@@ -170,7 +167,6 @@ class RemoteTagFSServer(object):
         try:
             # Save the file in the files directory.
             file_name = file_info['name']
-            self._file.write(file_name)
             file_hash = hashlib.md5(u' ' .join([tag.decode(self._encoding) 
                                               for tag in file_info['tags']]) 
                                     + file_name.decode(self._encoding)).hexdigest()
@@ -218,7 +214,7 @@ class RemoteTagFSServer(object):
         try:
             searcher = self._index.searcher()
             doc = searcher.document(hash=file_hash.decode(self._encoding))
-            if doc is not None:
+            if doc is not None:                
                 # Remove the file from the files directory.
                 os.remove(os.path.join(self._files_dir, doc['path']))
                 
@@ -226,11 +222,11 @@ class RemoteTagFSServer(object):
                 writer = self._index.writer()
                 writer.delete_by_term('hash', file_hash.decode(self._encoding))
                 writer.commit()
-                
+
                 # Update the empty space in this server.
                 self._status['empty_space'] += long(doc['size'])
         finally:
-            self._mrsw_lock.read_out()
+            self._mrsw_lock.write_out()
         
     def list(self, tags):
         """
@@ -320,9 +316,14 @@ class RemoteTagFSServer(object):
         @return: Conjunto con las etiquetas en este servidor.
         """
         reader = self._index.reader()
+        searcher = self._index.searcher()
         tags = set()
         for tag in reader.lexicon('tags'):
-            tags.add(tag)
+            # Ugly hack! Returns tags that were removed from the index?!
+            query = whoosh.query.Term('tags', tag)
+            results = searcher.search(query)
+            if len(results) > 0:
+                tags.add(tag)
         return tags
     
     def get_popular_tags(self, number):
@@ -335,7 +336,7 @@ class RemoteTagFSServer(object):
         
         @rtype: C{set}
         @return: Conjunto de tuplas de la forma (frecuencia, tag) 
-        """
+        """        
         reader = self._index.reader()
         return set(reader.most_distinctive_terms('tags', number))
         

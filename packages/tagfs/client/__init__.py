@@ -66,7 +66,7 @@ class TagFSClient(object):
         
     def terminate(self):
         """
-        Termina la ejecución del client TagFS. Despues de ejecutado este método 
+        Termina la ejecución del client TagFS. Después de ejecutado este método 
         no se debe hacer ningún llamado a los métodos de esta instancia.
         """
         self._server.stop()
@@ -180,7 +180,6 @@ class TagFSClient(object):
             info['group'] = group
             info['perms'] = str(perms)
             
-            
             # Save the file in each selected server.
             saved = False
             for server in servers:
@@ -231,7 +230,7 @@ class TagFSClient(object):
         @param file_hash: Hash del contenido del archivo que se quiere
             eliminar. Este hash identifica al archivo únicamente
             dentro del sistema de ficheros distribuido.
-        """    
+        """
         with self._servers_mutex:
             for server in self._servers.itervalues():
                 try:
@@ -314,8 +313,7 @@ class TagFSClient(object):
     
     def get_all_tags(self):
         """
-        Obtiene un conjunto con todas las tags que tiene algún archivo 
-        almacenado en el sistema.
+        Permite obtener un conjunto con todas los tags en el sistema.
         
         @rtype: C{set}
         @return: Conjunto con los nombres de las etiquetas del sistema.
@@ -333,7 +331,7 @@ class TagFSClient(object):
 
     def get_popular_tags(self, number):
         """
-        Obtiene un conjunto con los tags más populares del sistema.
+        Permite obtener un conjunto con los tags más populares del sistema.
         
         @type number: C{int}
         @param number: Cantidad de tags populares deseadas.
@@ -356,8 +354,6 @@ class TagFSClient(object):
                     # Ignoring any exception here.
                     pass
         for tag,frequencys in all_results.iteritems():
-            result = (sum(frequencys)/len(frequencys), tag)
+            result = (sum(frequencys) / len(frequencys), tag)
         result.sort()
-        return set([tag for _,tag in result[:number]])
-        
-        
+        return set([tag for _, tag in result[:number]])

@@ -6,7 +6,6 @@ Implementación de un cliente TagFS para la línea de comandos.
 
 import shlex
 import textwrap
-from io import open
 
 try:
     # Used by raw_input for history, if available.
@@ -42,31 +41,31 @@ class CLITagFSClient(TagFSClient):
         self._replication = replication
         self._continue = True
         self._cwd = '/'
-        self._user = "foo"
-        self._group = "foo"
-        self._description = "Uploaded from Command Line Client"
+        self._user = 'tagfs'
+        self._group = 'tagfs'
+        self._description = 'Uploaded using the command line client.'
         all_tags = self.get_all_tags() 
-        self._cwd_elements = dict(zip(all_tags,len(all_tags)*[(None,True)]))
+        self._cwd_elements = dict(zip(all_tags, len(all_tags) * [(None, True)]))
         self._empty_dirs = set()
         
     def start(self):
         """
         Inicializa el ciclo principal del cliente TagFS para la línea de comandos.
         """
-        
         welcome = 'Welcome to TagFS v{version}.\n' 
         print welcome.format(version=__version__)
         while self._continue:
             try:
                 prompt = 'TagFS:{cwd}> '.format(cwd=self._cwd)
-                user_input = raw_input(prompt)
-                cmd = user_input.split()[0]
-                try:
-                    func = getattr(self, '_command_{cmd}'.format(cmd=cmd))
-                    args = shlex.split(user_input[len(cmd):].lstrip())
-                    func(args)
-                except AttributeError:
-                    print '\nInvalid command "{cmd}".\n'.format(cmd=cmd)
+                user_input = raw_input(prompt).strip()
+                if user_input:
+                    cmd = user_input.split()[0]
+                    try:
+                        func = getattr(self, '_command_{cmd}'.format(cmd=cmd))
+                        args = shlex.split(user_input[len(cmd):].lstrip())
+                        func(args)
+                    except AttributeError:
+                        print '\nInvalid command "{cmd}".\n'.format(cmd=cmd)
             except (EOFError, KeyboardInterrupt):
                 print 'exit'
                 self._command_exit('')
@@ -79,15 +78,6 @@ class CLITagFSClient(TagFSClient):
         """
         return super(CLITagFSClient, self).put(name, description, tags, owner,
                                                group, perms, data, self._replication)
-
-    def _get_file_hash(self, path):
-        """
-        Devuelve el identificador del sistema correspondient al archivo del path.
-        """
-        path = self._get_absolute(path)
-        tags = self._get_tags(path)
-        file_hash = self.list(tags).index(path.split("/")[-1])
-        return file_hash
     
     def _get_absolute(self, path):
         """
@@ -96,7 +86,7 @@ class CLITagFSClient(TagFSClient):
         
         En caso de que path sea en efecto un camino absoluto no hace nada. 
         """
-        if not path.startswith("/"):
+        if not path.startswith('/'):
             return self._cwd + path
         else:
             return path
@@ -105,42 +95,42 @@ class CLITagFSClient(TagFSClient):
         """
         Construye el conjunto de tags que representa un camino absoluto.
         """
-        list = path.split("/")[1:]
-        if not path.endswith("/"):
+        list = path.split('/')[1:]
+        if not path.endswith('/'):
             list = list[:-1]
-        return set(list)-set([''])    
+        return set(list) - set([''])    
     
     def _command_cp(self, args):
         """
-        Usage: cp [source:]file1 [source:]file2
+        Usage: cp [type:]source [type:]dest
         
-        Copies the content of file1 into file2. 
-        Sources available are "local" for local files and "remote" for files 
-        into TagFS. The default source is "remote".  
+        Copy the content of source to dest. Available types are "local" for 
+        local files and "remote" for files located in the distributed 
+        filesystem. The default type is "remote".
         """
-        
         error_msg = '{command}: {msg}.'
         if (not args) or (len(args) < 2):
             print error_msg.format(command='cp', msg='Missing operand')
-            print 'Try "help {command}" for more information.'.format(command='mkdir')
+            print 'Try "help cp" for more information.'
             return
-        #file1
-        file1 = None
-        local_file1, local_file2 = None, None
+        
+        # Opening the source file.
+        source = None
+        local_source, local_dest = None, None
         if args[0].startswith("local:"):
             try:
-                local_file1 = open(args[0][6:], 'rb')
-                file1 = local_file1.read()
+                local_source = open(args[0][6:], 'rb')
+                source = local_source.read()
             except Exception:
-                print error_msg.format(command='cp', 
-                                       msg='Unable to access {0}'.format(args[0]))
+                print error_msg.format(command='cp', msg='Unable to access {0}'.format(args[0]))
+                return
         else:
             if args[0].startswith("remote:"):
                 path = args[0][7:]
             else:
                 path = args[0]
                 path = self._get_absolute(path)
-                
+
             name = path[path.rfind('/')+1:]
             path_tags = self._get_tags(path)
             infos = [self.info(hash) for hash in self.list(path_tags)]
@@ -150,19 +140,18 @@ class CLITagFSClient(TagFSClient):
                     file_hash = info['hash']
                     break
             if not file_hash:                   
-                print error_msg.format(command='cp', 
-                                       msg='Unable to access {0}'.format(args[0]))
+                print error_msg.format(command='cp', msg='Unable to access {0}'.format(args[0]))
+                return
             else:
-                file1 = self.get(file_hash)
+                source = self.get(file_hash)
         
-        #write file1 into file2.
+        # Writing the source file to destination.
         if args[1].startswith("local:"):
             try:
-                local_file2 = open(args[1][6:], 'wb')
-                local_file2.write(file1)
+                local_dest = open(args[1][6:], 'wb')
+                local_dest.write(source)
             except Exception:
-                print error_msg.format(command='cp', 
-                                       msg='Unable to access {0}'.format(args[1]))
+                print error_msg.format(command='cp', msg='Unable to access {0}'.format(args[1]))
         else:
             if args[1].startswith("remote:"):
                 path = args[1][7:]
@@ -173,56 +162,54 @@ class CLITagFSClient(TagFSClient):
             path_tags = self._get_tags(path)
 
             try:
-                self.put(name, self._description, path_tags, self._user, 
-                         self._group, 775, file1)
+                self.put(name, self._description, path_tags, self._user, self._group, 775, source)
                 self._empty_dirs.difference_update(path_tags)
             except Exception:
-                print error_msg.format(command='cp', 
-                                       msg='Unable to access {0}'.format(args[1]))
+                print error_msg.format(command='cp', msg='Unable to access {0}'.format(args[1]))
                         
     def _command_rm(self, args):
         """
         Usage: rm file
         
-        Removes the file of the system.
+        Remove a file from the distributed filesystem.
         """
         error_msg = '{command}: {msg}.'
         error = None
         path = ""
         name = ""
         if not args:
-            error = error_msg.format(command='rm',msg='Missing operand')
+            error = error_msg.format(command='rm', msg='Missing operand')
             error += '\nTry "help {command}" for more information.'.format(command='rm')
         if not error:
             path = self._get_absolute(args[0])
             if path.endswith('/'):
-                error =  error_msg.format(command='rm',  
-                                          msg='cannot remove {0}: Is a directory')
+                error =  error_msg.format(command='rm', msg='cannot remove "{0}": Is a directory')
         if not error:
             name = path[path.rfind('/')+1:]
             path_tags = self._get_tags(path)
             if len(path_tags) == 0:
-                error = error_msg.format(command='rm',  
-                                         msg='cannot remove {0}: No such file or directory')
+                error = error_msg.format(command='rm', msg='cannot remove "{0}": No such file or directory')
         if not error:
             infos = [self.info(hash) for hash in self.list(path_tags)]
             if not infos:
-                error = error_msg.format(command='rm',  
-                                         msg='cannot remove {0}: No such file or directory')
+                error = error_msg.format(command='rm', msg='cannot remove "{0}": No such file or directory')
         if not error:
+            removed = False
             for info in infos:
                 if info['name'] == name:
                     self.remove(info['hash'])
-                    print 'removed {0}.'.format(name)
-        else:
-            print error
+                    removed = True
+            if not removed:
+                error = error_msg.format(command='rm', msg='cannot remove "{0}": No such file or directory')
+        if error:
+            print error.format(name)
     
     def _command_cd(self, args):
         """
         Usage: cd [directory]
         
-        Changes the current directory. If it is executed without a directory
-        as arguments it changes the current directory for /.
+        Change the current working directory. If it is executed without a 
+        directory as argument it changes the current working directory to /.
         """ 
         error_msg = '{command}: {file}: {msg}.'
         path = ""
@@ -248,8 +235,7 @@ class CLITagFSClient(TagFSClient):
         else:
             infos = [self.info(hash) for hash in self.list(path_tags)]
             if not infos:
-                print error_msg.format(command='cd', file=args[0], 
-                                       msg='Not such file or directory')
+                print error_msg.format(command='cd', file=args[0], msg='Not such file or directory')
             else:
                 self._cwd = path
 
@@ -257,7 +243,7 @@ class CLITagFSClient(TagFSClient):
         """
         Usage: mkdir directory
         
-        Creates the directory if not exists.
+        Create a directory if does not exists.
         """
         error_msg = '{command}: {msg}.'
         error =  None
@@ -277,14 +263,12 @@ class CLITagFSClient(TagFSClient):
             
             if tags.issubset(all_dirs):
                 if dir_name in all_dirs:
-                    error = error_msg.format(command='mkdir',
-                                             msg=' Cannot create directory {file}: {reason}')
+                    error = error_msg.format(command='mkdir', msg=' Cannot create directory {file}: {reason}')
                     error = error.format(file=dir_name, reason='File exists')
                 else: 
                     self._empty_dirs.add(dir_name)
             else:
-                error = error_msg.format(command = 'mkdir', 
-                                         msg=' Cannot create directory {file}: {reason}')
+                error = error_msg.format(command = 'mkdir', msg=' Cannot create directory {file}: {reason}')
                 error = error.format(file=args[0], reason='Not such file or directory')
         if error:
             print error
@@ -293,8 +277,9 @@ class CLITagFSClient(TagFSClient):
         """
         Usage: ls [directory]
         
-        Lists the content of the directory. If it is executed without a 
-        directory as argument it prints the content of the current directory. 
+        List the content of the directory. If it is executed without a 
+        directory as argument it prints the content of the current 
+        working directory. 
         """
         elements = {}
         error_msg = '{command}: {file}: {msg}.'
@@ -302,7 +287,9 @@ class CLITagFSClient(TagFSClient):
             path = self._cwd
         else:
             path = self._get_absolute(args[0])
-            
+            if not path.endswith('/'):
+                path += '/'
+
         if path == '/':
             all_tags = self.get_all_tags()
             for dir in all_tags | self._empty_dirs:
@@ -311,15 +298,15 @@ class CLITagFSClient(TagFSClient):
             path_tags = self._get_tags(path)
             all_tags = self.get_all_tags()
             tags = set()
-            if (len(self._empty_dirs) > 0 and 
-                (path_tags - all_tags).issubset(self._empty_dirs)):
+            if len(self._empty_dirs) > 0 and len(path_tags - all_tags) > 0:
                 for dir in (self._empty_dirs - (path_tags - all_tags)):
                     elements[dir] = (None, True)
+                    # TODO: Posiblemente faltan directorios por listar aquí.
             else:
                 infos = [self.info(hash) for hash in self.list(path_tags)]
                 if not infos:
-                    print error_msg.format(command='cd', file=args[0], 
-                                           msg='Not such file or directory')
+                    print error_msg.format(command='ls', file=path, msg='Not such file or directory')
+                    return
                 else:
                     for info in infos:
                         elements[info['name']] = (info, False)
@@ -334,10 +321,20 @@ class CLITagFSClient(TagFSClient):
         items = []
         for name, (info, dir) in elements.items():
             if dir:
-                item = ('drwxr-xr-x', self._user, self._group,
-                              '0000', name)
+                item = ('drwxr-xr-x', self._user, self._group, '0', name)
             else:
-                item = (str(info['perms']).rjust(10), info['owner'],
+                perms = str(info['perms'])
+                user_perms = int(perms[0])
+                group_perms = int(perms[1])
+                other_perms = int(perms[2])
+                perm_trans = {
+                    0: '---', 1: '--x', 2: '-w-', 3: '-wx',
+                    4: 'r--', 5: 'r-x', 6: 'rw-', 7: 'rwx',                    
+                }
+                str_perms = '-'
+                for perm in (user_perms, group_perms, other_perms):
+                    str_perms += perm_trans[perm]
+                item = (str_perms.rjust(10), info['owner'],
                         info['group'], info['size'], info['name'])
             if len(item[0]) > largest[0]:
                 largest[0] = len(item[0])
@@ -359,19 +356,17 @@ class CLITagFSClient(TagFSClient):
         
     def _command_find(self, args):
         """
-        Usage: find term
+        Usage: find terms
         
-        Finds into the description, type, tags and name of the files in the 
-        system the term provided.
-        TODO 
+        Find files in the distributed filesystem using terms from the 
+        description, the type, the tags and the name of the file.
         """
         
     def _command_file(self, args):
         """
         Usage: file file
         
-        Determine type of the file.
-        TODO    
+        Determine type of a file.
         """
 
     def _command_exit(self, args):
