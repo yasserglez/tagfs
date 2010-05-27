@@ -217,9 +217,13 @@ class CLITagFSClient(TagFSClient):
         if not args:
             path = "/"
         elif args[0] == "..":
-            index = self._cwd[:-1].rindex('/')
-            path = self._cwd[:index+1]
-            path_tags = self._get_tags(path)
+            if self._cwd != '/':
+                index = self._cwd[:-1].rindex('/')
+                path = self._cwd[:index+1]
+                path_tags = self._get_tags(path)
+            else:
+                path = self._cwd
+                path_tags = set()
         else:
             if not args[0].endswith('/'):
                 args[0] = args[0]+'/'
@@ -345,7 +349,7 @@ class CLITagFSClient(TagFSClient):
             if len(item[3]) > largest[3]:
                 largest[3] = len(item[3])
             if len(item[4]) > largest[4]:
-                largest[4] = len(item[4])                
+                largest[4] = len(item[4])
             items.append(item)
         for perms, owner, group, size, name in items:
             print msg.format(perms=perms.rjust(largest[0]),

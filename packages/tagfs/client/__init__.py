@@ -340,7 +340,6 @@ class TagFSClient(object):
         @return: Conjunto con los nombres de las etiquetas del sistema.
         """
         all_results = {}
-        result = []
         with self._servers_mutex:
             for server in self._servers.itervalues():
                 try:
@@ -353,7 +352,9 @@ class TagFSClient(object):
                 except Exception:
                     # Ignoring any exception here.
                     pass
-        for tag,frequencys in all_results.iteritems():
-            result = (sum(frequencys) / len(frequencys), tag)
+        result = []
+        for tag, freqs in all_results.iteritems():
+            mean = (sum(freqs) / len(freqs), tag)
+            result.append(mean)
         result.sort()
-        return set([tag for _, tag in result[:number]])
+        return set([tag for (_, tag) in result[:number]])

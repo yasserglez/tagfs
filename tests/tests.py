@@ -7,6 +7,8 @@ Pruebas por unidad del Sistema.
 import os
 import sys
 import time
+import random
+import hashlib
 import unittest
 import threading
 import shutil
@@ -24,6 +26,8 @@ from tagfs.client import TagFSClient
 
 
 TESTS_DIR = os.path.abspath(os.path.join(SRC_DIR, 'tests'))
+
+FILES_DIR = os.path.join(TESTS_DIR, 'files')
 
 CLIENT_IP = '127.0.0.1'
 
@@ -79,12 +83,109 @@ class TagFS(unittest.TestCase):
         for client_data_dir in self._client_data_dirs:
             shutil.rmtree(client_data_dir)
 
-    def testA(self):
-        pass
+    def testPut(self):
+        client = random.choice(self._clients)
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   set(['ubuntu', 'gnu', 'linux', 'logo']), 'tagfs', 'tagfs', 644, 
+                   open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read(), 100)        
+        client.put('UbuntuIsHumanity.ogv',  'Ubuntu is Humanity video.', 
+                   set(['ubuntu', 'gnu', 'linux', 'humanity', 'video']), 'tagfs', 'tagfs', 
+                   644, open(os.path.join(FILES_DIR, 'UbuntuIsHumanity.ogv')).read(), 50)
+        results = client.list(set(['ubuntu']))
+        self.assertEquals(len(results), 2)
+        
+    def testGet(self):
+        original_data = open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read()
+        client = random.choice(self._clients)
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   set(['ubuntu', 'gnu', 'linux', 'logo']), 
+                   'tagfs', 'tagfs', 644, original_data, 100)
+        results = client.list(set(['ubuntu']))
+        hash = results.pop()
+        tagfs_data = client.get(hash)
+        self.assertEqual(hashlib.md5(original_data).digest(), 
+                         hashlib.md5(tagfs_data).digest())
+        
+    def testRemove(self):
+        client = random.choice(self._clients)
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   set(['ubuntu', 'gnu', 'linux', 'logo']), 'tagfs', 'tagfs', 644, 
+                   open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read(), 20)        
+        results = client.list(set(['ubuntu']))
+        self.assertEquals(len(results), 1)
+        client.remove(results.pop())
+        self.assertEquals(len(results), 0)
+        
+    def testList(self):
+        client = random.choice(self._clients)
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   set(['ubuntu', 'gnu', 'linux', 'logo']), 'tagfs', 'tagfs', 644, 
+                   open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read(), 100)        
+        client.put('UbuntuIsHumanity.ogv',  'Ubuntu is Humanity video.', 
+                   set(['ubuntu', 'gnu', 'linux', 'humanity', 'video']), 'tagfs', 'tagfs', 
+                   644, open(os.path.join(FILES_DIR, 'UbuntuIsHumanity.ogv')).read(), 50)
+        self.assertEquals(len(client.list(set(['ubuntu', 'logo', 'video']))), 0)
+        self.assertEquals(len(client.list(set(['logo']))), 1)
+        self.assertEquals(len(client.list(set(['video']))), 1)
+        self.assertEquals(len(client.list(set(['ubuntu']))), 2)
+        
+    def testSearch(self):
+        client = random.choice(self._clients)
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   set(['ubuntu', 'gnu', 'linux', 'logo']), 'tagfs', 'tagfs', 644, 
+                   open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read(), 100)        
+        client.put('UbuntuIsHumanity.ogv',  'Ubuntu is Humanity video.', 
+                   set(['ubuntu', 'gnu', 'linux', 'humanity', 'video']), 'tagfs', 'tagfs', 
+                   644, open(os.path.join(FILES_DIR, 'UbuntuIsHumanity.ogv')).read(), 50)
+        results = client.search('ubuntu gnu linux logo')
+        self.assertEquals(client.info(results.pop())['name'], 'UbuntuLogo.png')
+        results = client.search('humanity')
+        self.assertEquals(client.info(results.pop())['name'], 'UbuntuIsHumanity.ogv')        
     
-    def testB(self):
-        pass
+    def testInfo(self):
+        client = random.choice(self._clients)
+        name = 'UbuntuLogo.png'
+        desc = 'The Ubuntu logo.'
+        tags = set(['ubuntu', 'gnu', 'linux', 'logo'])
+        owner = 'tagfs'
+        group = 'tagfs'
+        perms = 644
+        data = open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read()
+        client.put(name,  desc, tags, owner, group, perms, data, 20)        
+        hash = client.list(set(['ubuntu'])).pop()
+        info = client.info(hash)
+        self.assertEquals(info['tags'], tags)
+        self.assertEquals(info['description'], desc)
+        self.assertEquals(info['name'], name)
+        self.assertEquals(int(info['size']), len(data))
+        self.assertEquals(info['owner'], owner)
+        self.assertEquals(info['group'], group)
+        self.assertEquals(int(info['perms']), perms)
     
+    def testGetAllTags(self):
+        client = random.choice(self._clients)
+        logo_tags = set(['ubuntu', 'gnu', 'linux', 'logo'])
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   logo_tags, 'tagfs', 'tagfs', 644, 
+                   open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read(), 100)
+        video_tags = set(['ubuntu', 'gnu', 'linux', 'humanity', 'video'])        
+        client.put('UbuntuIsHumanity.ogv',  'Ubuntu is Humanity video.', 
+                   video_tags, 'tagfs', 'tagfs', 
+                   644, open(os.path.join(FILES_DIR, 'UbuntuIsHumanity.ogv')).read(), 50)
+        all_tags = client.get_all_tags()
+        self.assertEquals(all_tags, logo_tags | video_tags)
+        
+    def testGetPopularTags(self):
+        client = random.choice(self._clients)
+        client.put('UbuntuLogo.png',  'The Ubuntu logo.', 
+                   set(['ubuntu', 'gnu', 'linux', 'logo']), 'tagfs', 'tagfs', 644, 
+                   open(os.path.join(FILES_DIR, 'UbuntuLogo.png')).read(), 100)        
+        client.put('UbuntuIsHumanity.ogv',  'Ubuntu is Humanity video.', 
+                   set(['ubuntu', 'gnu', 'linux', 'humanity', 'video']), 'tagfs', 'tagfs', 
+                   644, open(os.path.join(FILES_DIR, 'UbuntuIsHumanity.ogv')).read(), 50)
+        popular_tags = client.get_popular_tags(3)
+        self.assertEquals(popular_tags, set(['ubuntu', 'logo', 'linux']))
+
 
 if __name__ == "__main__":
     module = os.path.basename(__file__)[:-3]
@@ -92,4 +193,3 @@ if __name__ == "__main__":
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
     sys.exit(not result.wasSuccessful())
-

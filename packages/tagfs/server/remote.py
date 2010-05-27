@@ -321,7 +321,7 @@ class RemoteTagFSServer(object):
         for tag in reader.lexicon('tags'):
             # Ugly hack! Returns tags that were removed from the index?!
             query = whoosh.query.Term('tags', tag)
-            results = searcher.search(query)
+            results = searcher.search(query, limit=1)
             if len(results) > 0:
                 tags.add(tag)
         return tags
@@ -338,7 +338,7 @@ class RemoteTagFSServer(object):
         @return: Conjunto de tuplas de la forma (frecuencia, tag) 
         """        
         reader = self._index.reader()
-        return set(reader.most_distinctive_terms('tags', number))
+        return set(reader.most_distinctive_terms('tags', number, u''))
         
     def terminate(self):
         """
