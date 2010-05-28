@@ -183,16 +183,20 @@ class CLITagFSClient(TagFSClient):
         if not error:
             path = self._get_absolute(args[0])
             if path.endswith('/'):
-                error =  error_msg.format(command='rm', msg='cannot remove "{0}": Is a directory')
+                name = path[:-1][path.rfind('/')+1:]
+                error =  error_msg.format(command='rm', 
+                                          msg='cannot remove "{0}": Is a directory'.format(name))
         if not error:
             name = path[path.rfind('/')+1:]
             path_tags = self._get_tags(path)
-            if len(path_tags) == 0:
-                error = error_msg.format(command='rm', msg='cannot remove "{0}": No such file or directory')
+            if len(path_tags - self._empty_dirs) == 0:
+                error = error_msg.format(command='rm', 
+                                         msg='cannot remove "{0}": No such file or directory'.format(name))
         if not error:
             infos = [self.info(hash) for hash in self.list(path_tags)]
             if not infos:
-                error = error_msg.format(command='rm', msg='cannot remove "{0}": No such file or directory')
+                error = error_msg.format(command='rm', 
+                                         msg='cannot remove "{0}": No such file or directory'.format(name))
         if not error:
             removed = False
             for info in infos:
@@ -200,7 +204,8 @@ class CLITagFSClient(TagFSClient):
                     self.remove(info['hash'])
                     removed = True
             if not removed:
-                error = error_msg.format(command='rm', msg='cannot remove "{0}": No such file or directory')
+                error = error_msg.format(command='rm', 
+                                         msg='cannot remove "{0}": No such file or directory'.format(name))
         if error:
             print error.format(name)
     
@@ -303,9 +308,8 @@ class CLITagFSClient(TagFSClient):
             all_tags = self.get_all_tags()
             tags = set()
             if len(self._empty_dirs) > 0 and len(path_tags - all_tags) > 0:
-                for dir in (self._empty_dirs - (path_tags - all_tags)):
+                for dir in ((self._empty_dirs | all_tags) - path_tags):
                     elements[dir] = (None, True)
-                    # TODO: Posiblemente faltan directorios por listar aquí.
             else:
                 infos = [self.info(hash) for hash in self.list(path_tags)]
                 if not infos:
@@ -372,6 +376,46 @@ class CLITagFSClient(TagFSClient):
         
         Determine type of a file.
         """
+        error_msg = '{command}: {msg}.'
+        error = None
+        path = ""
+        name = ""
+        all_tags = self.get_all_tags()
+        if not args:
+            error = error_msg.format(command='file', msg='Missing operand')
+            error += '\nTry "help {command}" for more information.'.format(command='file')
+        else:
+            path = self._get_absolute(args[0])
+            
+        if not error and path.endswith('/'):
+                name = path[:-1][path.rfind('/')+1:]
+        elif not error:
+            name = path[path.rfind('/')+1:]
+        
+        if not error and name in (all_tags | self._empty_dirs):
+            print '{name} : {type}.'.format(name=name, type='directory')
+            return
+        elif not error:
+            path_tags = self._get_tags(path)
+            if len(path_tags - self._empty_dirs) == 0:
+                error = error_msg.format(command='file', 
+                                         msg='"{0}": No such file or directory'.format(name))
+        if not error:
+            infos = [self.info(hash) for hash in self.list(path_tags)]
+            if not infos:
+                error = error_msg.format(command='file', 
+                                         msg='"{0}": No such file or directory'.format(name))
+        elif not error:
+            printed = False 
+            for info in infos:
+                if info['name'] == name:
+                    print '{name} : {type}.'.format(name=name, type=info['type'])
+                    printed = True
+            if not printed:
+                error = error_msg.format(command='file', 
+                                         msg='"{0}": No such file or directory'.format(name))
+        if error:
+            print error.format(name)
 
     def _command_exit(self, args):
         """
