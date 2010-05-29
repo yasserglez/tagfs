@@ -13,6 +13,8 @@ sys.path.insert(0, PACKAGES_DIR)
 CONTRIB_DIR = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, 'contrib')
 sys.path.insert(0, os.path.abspath(CONTRIB_DIR))
 
+DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, 'data'))
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
@@ -101,4 +103,4 @@ INSTALLED_APPS += (
 #Client Instance
 from tagfs.client import TagFSClient
 ADDRESS = '127.0.0.1'
-TAGFSCLIENT = TagFSClient(ADDRESS)
+TAGFSCLIENT = TagFSClient(ADDRESS, DATA_DIR, 10000)
