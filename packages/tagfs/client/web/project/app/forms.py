@@ -30,7 +30,7 @@ class SearchForm(forms.Form):
     """
     Form para busqueda de texto libre.
     """
-    search            = forms.CharField(label='Texto', max_length=250)
+    search            = forms.CharField(label='Buscar', max_length=250)
 
     def __unicode__(self):
         return self.text

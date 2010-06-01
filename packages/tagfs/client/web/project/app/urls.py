@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 
-from views import home, all_tags, list_tags, put
+from views import home, all_tags, list_tags, search, put
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin

@@ -6,11 +6,12 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from forms import UploadForm, ListForm
+from forms import UploadForm, ListForm, SearchForm
 
 HOME_TEMPLATE = 'site/home.html'
 ALL_TAGS_TEMPLATE = 'site/all_tags.html'
 LIST_TEMPLATE = 'site/list.html'
+SEARCH_TEMPLATE = 'site/search.html'
 PUT_TEMPLATE = 'site/put.html'
 
 CLIENT =  settings.TAGFSCLIENT
@@ -40,6 +41,18 @@ def list_tags(request):
     form = ListForm({'tags': get_tags})
     return render_to_response(LIST_TEMPLATE,
                                 { 'form_list': form, 'files': CLIENT.list(tags), 'active_tags': tags },
+                                context_instance=RequestContext(request))
+
+
+def search(request):
+    """
+    Lista los ficheros que contienen el texto search en el nombre,
+    descripcion y tags.
+    """
+    search = request.GET.get('search', '')
+    form = SearchForm({'search': search})
+    return render_to_response(SEARCH_TEMPLATE,
+                                { 'form_search': form, 'files': CLIENT.search(search) },
                                 context_instance=RequestContext(request))
 
 
