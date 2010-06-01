@@ -2,6 +2,8 @@
 
 {% block title %} {{ file_info.name }} {% endblock %}
 
+{% block page_title %} {{ file_info.name }} {% endblock %}
+
 {% block crumb %}
 
     -> <li><a href="/get/{{ file_info.hash }}">{{ file_info.name }}</a></li>
@@ -9,8 +11,6 @@
 {% endblock %}
 
 {% block content %}
-
-    <h2>{{ file_info.name }}</h2>
 
     <ul>
 
@@ -21,11 +21,28 @@
             {% endfor %}
         </li>
         <li>Descripción: {{ file_info.description }}</li>
-        <li>Tamaño: {{ file_info.size }}</li>
+        <li>Tamaño: {{ file_info.size }} Kb</li>
         <br>
-        <a href="/get/{{ file_info.hash }}">Descargar fichero</a>
-        <br>
-        <a href="/remove/{{ file_info.hash }}">Eliminar fichero</a>
+        <table style="margin-bottom: 10px;" border="0" cellpadding="5" cellspacing="0">
+
+            <tbody>
+
+                <tr>
+
+                    <td><img src="/media/images/yes.png" alt="Yes"></td>
+                    <td><strong><a href="/get/{{ file_info.hash }}">Descargar fichero</a></strong></td>
+
+                </tr>
+                <tr>
+
+                    <td><img src="/media/images/no.png" alt="No"></td>
+                    <td><strong><a href="/remove/{{ file_info.hash }}">Eliminar fichero</a></strong></td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
 
     </ul>
 

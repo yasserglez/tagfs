@@ -2,6 +2,8 @@
 
 {% block title %} Buscar ficheros {% endblock %}
 
+{% block page_title %} Buscar {% endblock %}
+
 {% block crumb %}
 
     -> <li><a href="/search/">Buscar ficheros</a></li>
@@ -19,6 +21,8 @@
     </form>
 
     <ul>
+        <strong>Ficheros</strong>
+
         {% for file_hash in files %}
 
             {% load app_tags %}
