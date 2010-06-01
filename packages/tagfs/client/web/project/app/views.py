@@ -20,6 +20,7 @@ CLIENT =  settings.TAGFSCLIENT
 
 def home(request):
     return render_to_response(HOME_TEMPLATE,
+                                { 'home': True },
                                 context_instance=RequestContext(request))
 
 
@@ -28,7 +29,7 @@ def all_tags(request):
     Muestra todos los tags del sistema.
     """
     return render_to_response(ALL_TAGS_TEMPLATE,
-                                { 'tags': CLIENT.get_all_tags() },
+                                { 'tags': CLIENT.get_all_tags(), 'all_tags': True },
                                 context_instance=RequestContext(request))
 
 
@@ -42,7 +43,8 @@ def list_tags(request):
         tags.add(tag)
     form = ListForm({'tags': get_tags})
     return render_to_response(LIST_TEMPLATE,
-                                { 'form_list': form, 'files': CLIENT.list(tags), 'active_tags': tags },
+                                { 'form_list': form, 'files': CLIENT.list(tags),
+                                  'active_tags': tags, 'list_tags': True },
                                 context_instance=RequestContext(request))
 
 
@@ -54,7 +56,8 @@ def search(request):
     search = request.GET.get('search', '')
     form = SearchForm({'search': search})
     return render_to_response(SEARCH_TEMPLATE,
-                                { 'form_search': form, 'files': CLIENT.search(search) },
+                                { 'form_search': form, 'files': CLIENT.search(search),
+                                  'search': True },
                                 context_instance=RequestContext(request))
 
 
@@ -82,10 +85,11 @@ def put(request):
             save = CLIENT.put(name, description, tags, 'django', 'django', 775, data, replication)
             form = UploadForm()
             return render_to_response(PUT_TEMPLATE,
-                                        {'form_put': form.as_p(), 'save': save},
+                                        {'form_put': form.as_p(), 'save': save,
+                                         'put': True},
                                         context_instance=RequestContext(request))
     return render_to_response(PUT_TEMPLATE,
-                                {'form_put': form.as_p()},
+                                {'form_put': form.as_p(), 'put': True},
                                 context_instance=RequestContext(request))
 
 
@@ -94,7 +98,7 @@ def file_info(request, file_hash):
     Muestra todos los datos del fichero.
     """
     return render_to_response(FILE_INFO_TEMPLATE,
-                                {'file_info': CLIENT.info(file_hash)},
+                                { 'file_info': CLIENT.info(file_hash) },
                                 context_instance=RequestContext(request))
 
 

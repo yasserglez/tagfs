@@ -41,11 +41,21 @@
 
                         <ul class="children show">
 
-                            <li class="cat-item current-cat"><a href="/">Inicio</a></li>
-                            <li class="cat-item"><a href="/all_tags/">Ver todos los tags</a></li>
-                            <li class="cat-item"><a href="/list/">Listar ficheros</a></li>
-                            <li class="cat-item"><a href="/search/">Buscar archivo</a></li>
-                            <li class="cat-item"><a href="/put/">Subir archivo</a></li>
+                            <li class="cat-item {% if home %} current-cat  {% endif %}">
+                                <a href="/">Inicio</a>
+                            </li>
+                            <li class="cat-item {% if all_tags %} current-cat  {% endif %}">
+                                <a href="/all_tags/">Ver todos los tags</a>
+                            </li>
+                            <li class="cat-item {% if list_tags %} current-cat  {% endif %}">
+                                <a href="/list/">Listar ficheros</a>
+                                </li>
+                            <li class="cat-item {% if search %} current-cat  {% endif %}">
+                                <a href="/search/">Buscar archivo</a>
+                            </li>
+                            <li class="cat-item {% if put %} current-cat  {% endif %}">
+                                <a href="/put/">Subir archivo</a>
+                            </li>
 
                         </ul>
 
