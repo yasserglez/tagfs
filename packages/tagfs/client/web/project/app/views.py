@@ -6,10 +6,11 @@ from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from forms import UploadForm
+from forms import UploadForm, ListForm
 
 HOME_TEMPLATE = 'site/home.html'
 ALL_TAGS_TEMPLATE = 'site/all_tags.html'
+LIST_TEMPLATE = 'site/list.html'
 PUT_TEMPLATE = 'site/put.html'
 
 CLIENT =  settings.TAGFSCLIENT
@@ -25,6 +26,20 @@ def all_tags(request):
     """
     return render_to_response(ALL_TAGS_TEMPLATE,
                                 { 'tags': CLIENT.get_all_tags() },
+                                context_instance=RequestContext(request))
+
+
+def list_tags(request):
+    """
+    Lista los archivos que continen los tags recibidos por el get.
+    """
+    get_tags = request.GET.get('tags', '')
+    tags = set()
+    for tag in get_tags.split():
+        tags.add(tag)
+    form = ListForm({'tags': get_tags})
+    return render_to_response(LIST_TEMPLATE,
+                                { 'form_list': form, 'files': CLIENT.list(tags), 'active_tags': tags },
                                 context_instance=RequestContext(request))
 
 
