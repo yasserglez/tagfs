@@ -1,0 +1,25 @@
+﻿{% extends "index.html" %}
+
+{% block title %} Ver todos los tags {% endblock %}
+
+{% block crumb %}
+
+    -> <li><a href="/all_tags/">Ver todos los tags</a></li>
+
+{% endblock %}
+
+{% block content %}
+
+    <ul>
+        {% for tag in tags %}
+
+            <li><a href="/list/?tags={{ tag }}">{{ tag }}</a></li>
+
+        {% endfor %}
+    </ul>
+
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}

@@ -1,0 +1,36 @@
+﻿{% extends "index.html" %}
+
+{% block title %} Listar ficheros {% endblock %}
+
+{% block crumb %}
+
+    -> <li><a href="/list/">Listar ficheros</a></li>
+
+{% endblock %}
+
+{% block content %}
+
+    <form action="" method="get">
+
+        {{ form_list.as_p }}
+
+        <input type="submit" name="submit" class="input_button" value="Listar ficheros">
+
+    </form>
+
+    <ul>
+        {% for file_hash in files %}
+
+            {% load app_tags %}
+            {% get_file_info file_hash as file_info %}
+
+            <li><a href="/get/{{ file_hash }}">{{ file_info.name }}</a> - {{ file_info.size }} Kb</li>
+
+        {% endfor %}
+    </ul>
+
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}

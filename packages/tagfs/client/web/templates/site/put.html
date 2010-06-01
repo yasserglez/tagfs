@@ -1,0 +1,33 @@
+﻿{% extends "index.html" %}
+
+{% block title %} Subir archivo {% endblock %}
+
+{% block crumb %}
+
+    -> <li><a href="/put/">Subir archivo</a></li>
+
+{% endblock %}
+
+{% block content %}
+
+    {% if save %}
+
+        <p>El fichero se ha guardado satisfactoriamente.</p>
+
+    {% endif %}
+
+    <form action="" method="post" enctype="multipart/form-data">
+
+        {{ form_put }}
+
+        <input type="submit" name="submit" class="input_button" value="Subir fichero">
+
+    </form>
+
+    <p>Todos los que tengan un * son campos requeridos.</p>
+
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}
