@@ -362,14 +362,6 @@ class CLITagFSClient(TagFSClient):
                              size=size.rjust(largest[3]),
                              name=name.rjust(largest[4]))
         
-    def _command_find(self, args):
-        """
-        Usage: find terms
-        
-        Find files in the distributed filesystem using terms from the 
-        description, the type, the tags and the name of the file.
-        """
-        
     def _command_file(self, args):
         """
         Usage: file file
