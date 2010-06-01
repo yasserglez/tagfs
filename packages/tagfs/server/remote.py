@@ -5,6 +5,7 @@ Implementación del servidor TagFS compartido en la red.
 """
 
 import os
+import time
 import hashlib
 import threading
 
@@ -48,13 +49,16 @@ class RemoteTagFSServer(object):
         self._data_dir = data_dir
         if not os.path.isdir(self._data_dir):
             os.mkdir(self._data_dir)
-        self.init_index()
-        self.init_files()
-        self.init_status(capacity)
-        self.init_autodiscovery()
+        self._init_index()
+        self._init_files()
+        self._init_status(capacity)
+        self._init_autodiscovery()
         self._mrsw_lock = sync.mrsw()
+        # Keep this last! This requires the index, locks, etc.
+        self._sync_thread = threading.Thread(target=self._sync_servers)
+        self._sync_thread.start()
         
-    def init_index(self):
+    def _init_index(self):
         """
         Inicializa el índice, implementado utilizando Whoosh, que contiene
         la información acerca de los archivos almacenados en este servidor
@@ -81,7 +85,7 @@ class RemoteTagFSServer(object):
         else:
             self._index = whoosh.index.open_dir(index_dir)
         
-    def init_files(self):
+    def _init_files(self):
         """
         Inicializa el directorio que contiene los archivos almacenados 
         en este servidor de TagFS. Los archivos no se almacenarán directamente
@@ -93,7 +97,7 @@ class RemoteTagFSServer(object):
         if not os.path.isdir(self._files_dir):
             os.mkdir(self._files_dir)
             
-    def init_status(self, capacity):
+    def _init_status(self, capacity):
         """
         Inicializa el diccionario de estado de este servidor de TagFS. Este 
         diccionario es el que se les envía a los clientes como respuesta
@@ -114,23 +118,23 @@ class RemoteTagFSServer(object):
         # Calculate the space used in the data directory.
         data_dir_size = 0L
         get_file_size_root = lambda root, file: os.path.getsize(os.path.join(root, file))
-        for root, dirs, files in os.walk(self._data_dir):
+        for root, _, files in os.walk(self._data_dir):
             get_file_size = lambda file: get_file_size_root(root, file)
             data_dir_size += sum(map(get_file_size, files))
         self._status['empty_space'] = capacity - data_dir_size
         
-    def init_autodiscovery(self):
+    def _init_autodiscovery(self):
         """
         Inicializa el descubrimiento automático de los servidores.
         """
         self._servers = {}
         self._servers_mutex = threading.Lock()                
-        self.addService = self.server_added
-        self.removeService = self.server_removed
+        self.addService = self._server_added
+        self.removeService = self._server_removed
         self._zeroconf = Zeroconf.Zeroconf(self._address)
         self._zeroconf_browser = Zeroconf.ServiceBrowser(self._zeroconf, ZEROCONF_SERVICE_TYPE, self)
         
-    def server_added(self, zeroconf, service_type, service_name):
+    def _server_added(self, zeroconf, service_type, service_name):
         """
         Método ejecutado cuando se descubre un nuevo servidor TagFS.
         
@@ -151,7 +155,7 @@ class RemoteTagFSServer(object):
             pyro_proxy = Pyro.core.getProxyForURI(pyro_uri)            
             self._servers[pyro_uri] = pyro_proxy
         
-    def server_removed(self, zeroconf, service_type, service_name):
+    def _server_removed(self, zeroconf, service_type, service_name):
         """
         Método ejecutado cuando un servidor TagFS deja de estar disponible.
         
@@ -170,6 +174,25 @@ class RemoteTagFSServer(object):
         with self._servers_mutex:
             pyro_uri = service_name[:-(len(service_type) + 1)]
             del self._servers[pyro_uri]
+            
+    def _sync_servers(self):
+        """
+        Método que garantiza la sincronización de los servidores.
+        """
+        sync_sleep = 5 * 60 # seconds
+        self._sync_cond = threading.Condition()
+        self._sync_continue = True
+        while self._sync_continue:
+            with self._servers_mutex:
+                self._mrsw_lock.write_in()
+                try:
+                    # TODO: Synchronize the servers here!
+                    pass
+                finally:
+                    self._mrsw_lock.write_out()
+            self._sync_cond.acquire()
+            self._sync_cond.wait(sync_sleep)
+            self._sync_cond.release()
         
     def status(self):
         """
@@ -409,4 +432,9 @@ class RemoteTagFSServer(object):
         indicar que va a dejar de estar disponible en la red este servidor y que
         se deben guardar todos los recursos abiertos.
         """
+        self._sync_continue = False
+        self._sync_cond.acquire()
+        self._sync_cond.notify()
+        self._sync_cond.release()
+        self._sync_thread.join()
         self._index.close()
