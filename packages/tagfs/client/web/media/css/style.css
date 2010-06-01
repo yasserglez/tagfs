@@ -691,8 +691,11 @@ img.right {
     color: #a68a7b;
 }
 form { padding-bottom:20px; }
-input {
-    margin-bottom:5px;
+label {
+    display: block;
+}
+input, textarea {
+    margin:10px;
     border:1px solid #dddddd;
     background-color:#ffffff;
     padding:5px;
@@ -701,6 +704,9 @@ input {
     background-color:#3d4f37;
     color:#e5e4bf;
     border:1px solid #273423;
+}
+.input_button:hover {
+    border:1px solid #dddddd;
 }
 table {
   margin-bottom:20px;

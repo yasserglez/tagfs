@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 
-from views import home
+from views import home, tags, put
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -16,7 +16,16 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # (r'^admin/', include(admin.site.urls)),
-    
+
     #Home
     (r'^$', home),
+
+    #All tags
+    (r'^tags/$', tags),
+
+    #Search
+    (r'^search/$', home),
+
+    #Upload
+    (r'^put/$', put),
 )
