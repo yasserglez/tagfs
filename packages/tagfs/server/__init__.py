@@ -40,12 +40,12 @@ class TagFSServer(object):
         self._continue = True
         self._sleep_time = 1
         self._address = address
-        self._remote = RemoteTagFSServer(data_dir, capacity)
+        self._remote = RemoteTagFSServer(address, data_dir, capacity)
         self._pyro_remote = Pyro.core.ObjBase()
         self._pyro_remote.delegateTo(self._remote)
         self.init_pyro()
         self.init_autodiscovery()
-        
+
     def init_pyro(self):
         """
         Inicializa el método utilizado para exportar las funcionalidades del 

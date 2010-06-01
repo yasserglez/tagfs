@@ -5,7 +5,9 @@ Implementación del servidor TagFS compartido en la red.
 """
 
 import os
+import time
 import hashlib
+import threading
 
 import sync
 import magic
@@ -13,6 +15,10 @@ import whoosh.index
 import whoosh.fields
 import whoosh.query
 import whoosh.qparser
+import Pyro.core
+import Zeroconf
+
+from tagfs.common import ZEROCONF_SERVICE_TYPE
 
 
 class RemoteTagFSServer(object):
@@ -20,9 +26,13 @@ class RemoteTagFSServer(object):
     Servidor TagFS compartido en la red utilizando Pyro. 
     """
 
-    def __init__(self, data_dir, capacity):
+    def __init__(self,  address, data_dir, capacity):
         """
         Inicializa una instancia de un servidor TagFS compartido en la red.
+        
+        @type address: C{str}
+        @param address: Dirección IP de la interfaz donde debe escuchar esta
+           instancia del servidor de TagFS.        
         
         @type data_dir: C{str}
         @param data_dir: Ruta absoluta al directorio utilizado para almacenar
@@ -35,13 +45,18 @@ class RemoteTagFSServer(object):
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.
         """
+        self._address = address
         self._data_dir = data_dir
         if not os.path.isdir(self._data_dir):
             os.mkdir(self._data_dir)
         self._init_index()
         self._init_files()
         self._init_status(capacity)
+        self._init_autodiscovery()
         self._mrsw_lock = sync.mrsw()
+        # Keep this last! This requires the index, locks, etc.
+        self._sync_thread = threading.Thread(target=self._sync_servers)
+        self._sync_thread.start()
         
     def _init_index(self):
         """
@@ -103,10 +118,81 @@ class RemoteTagFSServer(object):
         # Calculate the space used in the data directory.
         data_dir_size = 0L
         get_file_size_root = lambda root, file: os.path.getsize(os.path.join(root, file))
-        for root, dirs, files in os.walk(self._data_dir):
+        for root, _, files in os.walk(self._data_dir):
             get_file_size = lambda file: get_file_size_root(root, file)
             data_dir_size += sum(map(get_file_size, files))
         self._status['empty_space'] = capacity - data_dir_size
+        
+    def _init_autodiscovery(self):
+        """
+        Inicializa el descubrimiento automático de los servidores.
+        """
+        self._servers = {}
+        self._servers_mutex = threading.Lock()                
+        self.addService = self._server_added
+        self.removeService = self._server_removed
+        self._zeroconf = Zeroconf.Zeroconf(self._address)
+        self._zeroconf_browser = Zeroconf.ServiceBrowser(self._zeroconf, ZEROCONF_SERVICE_TYPE, self)
+        
+    def _server_added(self, zeroconf, service_type, service_name):
+        """
+        Método ejecutado cuando se descubre un nuevo servidor TagFS.
+        
+        @type zeroconf: C{Zeroconf}
+        @param zeroconf: Instancia del servidor implementando la comunicación
+            mediante Zeroconf Multicast DNS Service Discovery.
+        
+        @type service_type: C{str}
+        @param service_type: Nombre completamente calificado del tipo
+            de servicio que fue descubierto.
+        
+        @type service_name: C{str}
+        @param service_name: Nombre completamente calificado del nombre 
+            del servicio que fue descubierto.
+        """
+        with self._servers_mutex:
+            pyro_uri = service_name[:-(len(service_type) + 1)]
+            pyro_proxy = Pyro.core.getProxyForURI(pyro_uri)            
+            self._servers[pyro_uri] = pyro_proxy
+        
+    def _server_removed(self, zeroconf, service_type, service_name):
+        """
+        Método ejecutado cuando un servidor TagFS deja de estar disponible.
+        
+        @type zeroconf: C{Zeroconf}
+        @param zeroconf: Instancia del servidor implementando la comunicación
+            mediante Zeroconf Multicast DNS Service Discovery.
+            
+        @type service_type: C{str}
+        @param service_type: Nombre completamente calificado del tipo
+            de servicio que fue descubierto.
+        
+        @type service_name: C{str}
+        @param service_name: Nombre completamente calificado del nombre 
+            del servicio que fue descubierto.                    
+        """
+        with self._servers_mutex:
+            pyro_uri = service_name[:-(len(service_type) + 1)]
+            del self._servers[pyro_uri]
+            
+    def _sync_servers(self):
+        """
+        Método que garantiza la sincronización de los servidores.
+        """
+        sync_sleep = 5 * 60 # seconds
+        self._sync_cond = threading.Condition()
+        self._sync_continue = True
+        while self._sync_continue:
+            with self._servers_mutex:
+                self._mrsw_lock.write_in()
+                try:
+                    # TODO: Synchronize the servers here!
+                    pass
+                finally:
+                    self._mrsw_lock.write_out()
+            self._sync_cond.acquire()
+            self._sync_cond.wait(sync_sleep)
+            self._sync_cond.release()
         
     def status(self):
         """
@@ -346,4 +432,9 @@ class RemoteTagFSServer(object):
         indicar que va a dejar de estar disponible en la red este servidor y que
         se deben guardar todos los recursos abiertos.
         """
+        self._sync_continue = False
+        self._sync_cond.acquire()
+        self._sync_cond.notify()
+        self._sync_cond.release()
+        self._sync_thread.join()
         self._index.close()
