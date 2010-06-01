@@ -27,7 +27,7 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 body {
     line-height: 1;
     color: #696969;
-    background: #2f2f2f url(../images/header_bg.png) repeat-x 0 0;
+    background: #2f2f2f;
     font: 13px/20px Tahoma, Arial, Helvetica, sans-serif;
     height: 100%;
 }
@@ -52,8 +52,7 @@ blockquote {
     line-height: 1.2em;
     font-style: italic;
     padding: 20px 20px 20px 60px;
-    margin: 20px 0;
-    background: url(../images/quote.png) no-repeat 0 0;
+    margin: 20px 0;;
 }
 acronym {
     cursor: help;
@@ -160,16 +159,16 @@ h4 {
 }
 #header .logo {
     position: absolute;
-    left: 0px;
+    left: 10px;
     bottom: 15px;
 }
 #search_wrap {
     position: absolute;
-    right: 0px;
-    top: 78px;
+    right: 10px;
+    top: 15px;
 }
 #search_wrap #s {
-    background: #fefefe url(../images/search_bg.jpg) repeat-x 0 0;
+    background: #fefefe;
     border: 1px solid #24211d;
     padding: 6px 35px 7px 16px;
     font-size: 13px;
@@ -266,7 +265,6 @@ h4 {
 .jump-to {
   width: 255px;
   height: 383px;
-  background: url(../images/jump-to.png) no-repeat 0 0;
   position: absolute;
   top: -54px;
   right: 0px;
@@ -305,7 +303,7 @@ h4 {
 #navigation li a {
     border: 1px solid #c2c2c2;
     border-top: none;
-    background:#dddddd url(../images/navigation_border.gif) repeat-x 0 0;
+    background:#dddddd;
     color:#0d0d0d;
     display:block;
     font-weight:bold;
@@ -314,7 +312,7 @@ h4 {
     text-decoration: none;
 }
 #navigation li a:hover, #navigation li.current-cat-parent > a {
-    background:#cfcfcf url(../images/navigation_border.gif) repeat-x 0 0;
+    background:#cfcfcf;
 }
 #navigation ul {
     border: 1px solid #c2c2c2;
@@ -357,7 +355,7 @@ h4 {
 #sidebar .navigation li a {
     border: 1px solid #c2c2c2;
     border-top: none;
-    background:#dddddd url(../images/navigation_border.gif) repeat-x 0 0;
+    background:#dddddd;
     color:#0d0d0d;
     display:block;
     font-weight:bold;
@@ -366,7 +364,7 @@ h4 {
     text-decoration: none;
 }
 #sidebar .navigation li a:hover, #sidebar .navigation li.current_page_item a {
-    background:#cfcfcf url(../images/navigation_border.gif) repeat-x 0 0;
+    background:#cfcfcf;
 }
 #sidebar .navigation li {
     list-style:none outside none;
@@ -424,7 +422,6 @@ h4 {
 /* Post */
 #content .post_wrap {
     float: left;
-    background: url(../images/post_bg.gif) repeat-x 0 0;
     width: 652px;
     margin-bottom: 40px;
     padding-top: 5px;
@@ -472,7 +469,6 @@ h4 {
 #content #faq li a.question {
     padding: 5px 20px;
     display: block;
-    background: url(../images/collapsed.gif) no-repeat 5px 9px;
     color: #000;
     font-size: 14px;
     font-weight: bold;
@@ -482,7 +478,6 @@ h4 {
     text-decoration: underline;
 }
 #content #faq li a.down {
-    background: url(../images/expanded.gif) no-repeat 5px 9px;
 }
 #content #faq li li {
     border-bottom: 1px solid #d0d0d0;
@@ -535,7 +530,6 @@ h4 {
     margin-left: 40px;
 }
 #content .single ul li {
-    background: url(../images/li.gif) no-repeat 0 8px;
 }
 #content .single ol li {
     list-style: decimal;
@@ -546,7 +540,7 @@ h4 {
 }
 #content #sections ul {
     padding: 30px 40px 15px 20px;
-    background: #f1f1f1 url(../images/sections.gif) no-repeat 20px 15px;
+    background: #f1f1f1;
     border: 1px solid #d3d3d3;
     float: left;
 }
@@ -563,7 +557,7 @@ h4 {
     color: #000;
 }
 .tip {
-    background: #fafad6 url(../images/tip.gif) no-repeat 19px 10px;
+    background: #fafad6;
     border: 1px solid #f6d87d;
     padding: 10px;
     padding-bottom: 15px;
@@ -581,7 +575,7 @@ h4 {
     clear: both;
 }
 pre {
-    background: #eaf0f6 url(../images/code.gif) no-repeat 15px 10px;
+    background: #eaf0f6;
     border: 1px solid #bcc6d0;
     padding: 15px;
     padding-bottom: 10px;
@@ -626,7 +620,6 @@ img.right {
 }
 .improve span {
     padding-left: 22px;
-    background: url(../images/contact.png) no-repeat 0 4px;
 }
 .alignright {
     float: right;
@@ -664,7 +657,6 @@ img.right {
 /* Footer */
 #footer_wrap {
     position: relative;
-    background: url(../images/footer_border.png) repeat-x 0 0;
     min-width: 900px;
     padding: 0 10px;
 }
