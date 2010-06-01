@@ -3,7 +3,7 @@
 # Create your views here.
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -103,3 +103,10 @@ def get(request, file_hash):
     Devuelve el fichero para descargar.
     """
     return HttpResponse(CLIENT.get(file_hash), content_type='plain/text')
+
+def remove(request, file_hash):
+    """
+    Elimina dicho fichero.
+    """
+    CLIENT.remove(file_hash)
+    return HttpResponseRedirect('/')
