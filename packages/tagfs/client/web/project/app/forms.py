@@ -21,7 +21,7 @@ class ListForm(forms.Form):
     """
     Form para listar los ficheros que tienen todos los tags especificados.
     """
-    tags            = forms.CharField(label='Tags', max_length=250)
+    tags            = forms.CharField(label='Tags', max_length=250, required=False)
 
     def __unicode__(self):
         return self.tags
@@ -30,7 +30,7 @@ class SearchForm(forms.Form):
     """
     Form para busqueda de texto libre.
     """
-    search            = forms.CharField(label='Buscar', max_length=250)
+    search            = forms.CharField(label='Buscar', max_length=250, required=False)
 
     def __unicode__(self):
         return self.text
