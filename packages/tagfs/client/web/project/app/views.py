@@ -3,6 +3,7 @@
 # Create your views here.
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -95,3 +96,10 @@ def file_info(request, file_hash):
     return render_to_response(FILE_INFO_TEMPLATE,
                                 {'file_info': CLIENT.info(file_hash)},
                                 context_instance=RequestContext(request))
+
+
+def get(request, file_hash):
+    """
+    Devuelve el fichero para descargar.
+    """
+    return HttpResponse(CLIENT.get(file_hash), content_type='plain/text')
