@@ -9,7 +9,7 @@ from django.template import RequestContext
 from forms import UploadForm
 
 HOME_TEMPLATE = 'site/home.html'
-TAGS_TEMPLATE = 'site/tags.html'
+ALL_TAGS_TEMPLATE = 'site/all_tags.html'
 PUT_TEMPLATE = 'site/put.html'
 
 CLIENT =  settings.TAGFSCLIENT
@@ -19,20 +19,12 @@ def home(request):
                                 context_instance=RequestContext(request))
 
 
-def tags(request):
+def all_tags(request):
     """
     Muestra todos los tags del sistema.
     """
-    get_tags = request.GET.get('tags', '')
-
-    tags = set()
-    for tag in get_tags.split():
-        tags.add(tag)
-
-    objects, files = len(tags) and (CLIENT.list(tags), True) or (CLIENT.get_all_tags(), False)
-
-    return render_to_response(TAGS_TEMPLATE,
-                                { 'tags': tags, 'objects': objects, 'files': files },
+    return render_to_response(ALL_TAGS_TEMPLATE,
+                                { 'tags': CLIENT.get_all_tags() },
                                 context_instance=RequestContext(request))
 
 
