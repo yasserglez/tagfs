@@ -174,7 +174,7 @@ h4 {
     padding: 6px 35px 7px 16px;
     font-size: 13px;
     color: #404040;
-    width: 202px;
+    width: 220px;
     font-family: Tahoma, Arial, Helvetica, sans-serif;
 }
 #search_wrap #button {
@@ -189,6 +189,9 @@ h4 {
     cursor: pointer;
     letter-spacing: -5px;
     color: #fff;
+}
+#search_wrap input {
+    margin: 0;
 }
 .search-arrow {
   position: absolute;
@@ -691,8 +694,11 @@ img.right {
     color: #a68a7b;
 }
 form { padding-bottom:20px; }
-input {
-    margin-bottom:5px;
+label {
+    display: block;
+}
+input, textarea {
+    margin:10px;
     border:1px solid #dddddd;
     background-color:#ffffff;
     padding:5px;
@@ -701,6 +707,9 @@ input {
     background-color:#3d4f37;
     color:#e5e4bf;
     border:1px solid #273423;
+}
+.input_button:hover {
+    border:1px solid #dddddd;
 }
 table {
   margin-bottom:20px;

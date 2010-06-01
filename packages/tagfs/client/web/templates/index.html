@@ -3,230 +3,146 @@
 {% block body %}
 
     <div id="header_wrap">
-        
+
         <div id="header">
-            
+
             <img src="/media/images/header_gradient.jpg" alt="" class="gradient">
             <a href="/"><img src="/media/images/logo.png" alt="TagFS" class="logo"></a>
-            
+
             <div id="search_wrap">
-                
-                <form id="searchform" method="get" action="http://wiki.envato.com">
+
+                <form id="searchform" method="get" action="/search/">
                     <fieldset>
-                        <input name="s" id="s" size="15" type="text"><br>
+                        <input name="search" size="15" type="text"><br>
                         <input value="Go" id="button" type="submit">
                     </fieldset>
                 </form>
                 <img src="/media/images/search-arrow.gif" class="search-arrow" alt="">
-                
-            </div>            
-            
-            <ul class="quick-links">                
-                                
-            </ul>            
-            
-        </div>
-        
-    </div>
-    
-    <div id="page_wrap">
-        
-        <div id="page" class="clearfix">
-            
-            <div id="sidebar">
-                
-                <ul class="show" id="navigation">
-                    
-                    <li class="cat-item"><a href="/" title="View cat 1">Cat 1</a>
-                        
-                        <ul class="children">
-                            
-                            <li class="cat-item"><a href="/" title="View sub cat 1">sub cat 1</a></li>
-                            
-                        </ul>
-                        
-                    </li>
-                    <li class="cat-item"><a href="/" title="View cat 2">Cat 2</a>
-                        
-                        <ul class="children">
-                            
-                            <li class="cat-item"><a href="/" title="View sub cat 1">sub cat 1</a></li>
-                            
-                        </ul>
-                        
-                    </li>
-                    <li class="cat-item current-cat-parent show"><a href="/" title="View cat 3">Cat 3</a>
-                        
-                        <ul class="children show">
-                            
-                            <li class="cat-item"><a href="/" title="View sub cat 1">sub cat 1</a></li>
-                            <li class="cat-item current-cat"><a href="/" title="View sub cat 2">sub cat 2</a></li>
-                            
-                        </ul>
-                        
-                    </li>
-                    
-                    {% block navigation %} {% endblock %}
-                    
-                </ul>
-                
-                {% block sidebar %} {% endblock %}
-                
+
             </div>
-            
-            <div id="content">              
-                
-                <div id="crumb">
-                    
-                    <ul><li><a href="/">TagFS </a></li> {% block crumb %} {% endblock %}</ul>
-                    
-                </div>
-                
-                <div class="post_wrap">
-                    
-                    {% block content %} {% endblock %}
-                    
-                    <span class="tags">Tags: <a href="http://wiki.envato.com/tag/commission/" rel="tag">commission</a>, <a href="http://wiki.envato.com/tag/money/" rel="tag">money</a>, <a href="http://wiki.envato.com/tag/payment/" rel="tag">payment</a>, <a href="http://wiki.envato.com/tag/rates/" rel="tag">rates</a></span>
-                    
-                    <div class="single" id="post-754">
-                        <h1>Payment Rates</h1>
-                        <dl class="hidden">
-                            
-                            <dt>Make Money</dt>
-                            <dd>http://wiki.envato.com/selling/getting-paid/payment-rates/</dd>
-                            
-                        </dl>
-                        
-                        <p>Every time an item is sold on the <a href="http://wiki.envato.com/basics/envato/introduction-to-the-envato-marketplaces/">Envato Marketplaces</a>
-                            a percentage of the sale price goes to the author. The amount is
-                            determined by whether the author is selling the item only on the Envato
-                            Marketplaces and by how many sales they have had in the past. </p>
-                        
-                        <h2>Selling Exclusively: 40 – 70%</h2>
-                        <p>As an Author on the Envato Marketplaces you are eligible to receive
-                            between 40% and 70% of every sale should you choose to sell only items
-                            that are not sold elsewhere. Being an exclusive author simply means
-                            that any items you sell on an Envato Marketplace are unique to our
-                            libraries.</p>
-                        <p>You are entitled to sell <strong>other</strong> items elsewhere, but
-                            not the same ones. This helps keep the marketplaces healthy and unique,
-                            and ensures buyers aren’t just browsing through items they could get
-                            anywhere. So to sum up:</p>
-                        
-                        <table style="margin-bottom: 10px;" border="0" cellpadding="5" cellspacing="0">
-                            
-                            <tbody>
-                                
-                                <tr>
-                                    
-                                    <td><img src="/media/images/yes.png" alt="Yes"></td>
-                                    <td><strong>You CAN sell other items on other sites, including your own.</strong></td>
-                                    
-                                </tr>
-                                <tr>
-                                    
-                                    <td><img src="/media/images/no.png" alt="No"></td>
-                                    <td><strong>You CANNOT sell the same items elsewhere.</strong></td>
-                                    
-                                </tr>
-                                
-                            </tbody>
-                            
-                        </table>
-                        
-                        <p>New authors begin at the 40% level and as sales volume adds up, so
-                            does the commission percentage. That means the more you sell, the more
-                            you earn! It is tough to get all the way to the 70% point, but it is
-                            achievable and a few of our <a href="http://themeforest.net/author/top_authors">top authors</a> have already made it.  </p>
-                        <p>You can see a breakdown of how the percentages change with sales volume in the table below.</p>
-    
-                        <h3>Rates Schedule</h3>
-    
-                        <div class="general_table_border">
-    
-                            <table class="general_table" border="0" cellpadding="5" cellspacing="0" width="400">
-    
-                                <thead>
-    
-                                    <tr>
-    
-                                        <td width="50"><strong>%</strong></td>    
-                                        <td width="150"><strong>Sales volume $</strong></td>
-                                        <td width="50"><strong>%</strong></td>
-                                        <td width="150"><strong>Sales volume $</strong></td>
-                                        
-                                    </tr>
-                                    
-                                </thead>
-                                <tbody>
-                                    
-                                    <tr>
-                                        
-                                        <td>40%</td>
-                                        <td>0</td>
-                                        <td>56%</td>
-                                        <td>67,910</td>
-                                        
-                                    </tr>
-                                    <tr class="hover">
-                                        <td>43%</td>
-                                        <td>6,420</td>
-                                        <td>59%</td>
-                                        <td>95,970</td>
-                                        
-                                    </tr>
-                                    
-                                </tbody>
-                                
-                            </table>
-                            
-                        </div>
-                        
-                        <p>These are the rates as of the 15th February 2009, you can also view the <a href="http://wiki.envato.com/selling/getting-paid/historical-payment-rates/">Historical Rates</a> for reference.</p>
-    
-                        <h2>Selling Non-Exclusively: 25%</h2>
-                        <p>If you are choosing to sell the same content as you are selling on
-                            another marketplace or on your own site then you fall into the
-                            non-exclusive group. Non-exclusive authors receive 25% of each sale
-                            they make on the Envato Marketplaces. </p>
-                        
-                        <h2>Additional Earnings(Referral Program): 30%</h2>
-                        <p>Whether Exclusive or Non-Exclusive, you can refer new users to any
-                            of the Envato Marketplaces and you’ll receive an additional 30% of
-                            their first purchase or cash deposit! You can learn more <a href="http://wiki.envato.com/referral/basics-referral/referral-program/">here</a>.</p>
-                        
-                        <div class="rating_wrap clearfix">
-              
-                            <div ><strong>Rate this Article</strong> <img id="rating_754_1" src="/media/images/rating_on.gif" alt="1 Star" title="1 Star" onmouseover="current_rating(754, 1, '1 Star');" onmouseout="ratings_off(4.4, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="border: 0px none ; cursor: pointer;"><img id="rating_754_2" src="/media/images/rating_on.gif" alt="2 Stars" title="2 Stars" onmouseover="current_rating(754, 2, '2 Stars');" onmouseout="ratings_off(4.4, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="border: 0px none ; cursor: pointer;"><img id="rating_754_3" src="/media/images/rating_on.gif" alt="3 Stars" title="3 Stars" onmouseover="current_rating(754, 3, '3 Stars');" onmouseout="ratings_off(4.4, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="border: 0px none ; cursor: pointer;"><img id="rating_754_4" src="/media/images/rating_on.gif" alt="4 Stars" title="4 Stars" onmouseover="current_rating(754, 4, '4 Stars');" onmouseout="ratings_off(4.4, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="border: 0px none ; cursor: pointer;"><img id="rating_754_5" src="/media/images/rating_half.gif" alt="5 Stars" title="5 Stars" onmouseover="current_rating(754, 5, '5 Stars');" onmouseout="ratings_off(4.4, 5, 0);" onclick="rate_post();" onkeypress="rate_post();" style="border: 0px none ; cursor: pointer;"> <span>(119 Ratings)</span></div> 
-              
-                            <div class="improve">
-              	
-                                <div align="left"><span><strong>Help us improve the wiki</strong> <a href="http://flashden.net/support">Send Your Comments</a></span> </div>              
-                                
-                            </div>
-                
-                            <br class="clear">               
-                            
-                        </div>            
-                        
-                    </div>                  	  
-                    
-                </div>
-                        
-            </div>      
-            
-        </div>    
-        
-    </div>
-    
-    <div id="footer_wrap">
-        
-        <div id="footer">
-            
-            <p>&copy 2010 TagFS <br> Sistema de Ficheros Distribuido</p>
-            
+
+            <ul class="quick-links">
+
+            </ul>
+
         </div>
-        
+
     </div>
-    
+
+    <div id="page_wrap">
+
+        <div id="page" class="clearfix">
+
+            <div id="sidebar">
+
+                <ul class="show" id="navigation">
+
+                    <li class="cat-item current-cat-parent show"><a href="/">Menu</a>
+
+                        <ul class="children show">
+
+                            <li class="cat-item {% if home %} current-cat  {% endif %}">
+                                <a href="/">Inicio</a>
+                            </li>
+                            <li class="cat-item {% if all_tags %} current-cat  {% endif %}">
+                                <a href="/all_tags/">Ver todos los tags</a>
+                            </li>
+                            <li class="cat-item {% if list_tags %} current-cat  {% endif %}">
+                                <a href="/list/">Listar ficheros</a>
+                                </li>
+                            <li class="cat-item {% if search %} current-cat  {% endif %}">
+                                <a href="/search/">Buscar archivo</a>
+                            </li>
+                            <li class="cat-item {% if put %} current-cat  {% endif %}">
+                                <a href="/put/">Subir archivo</a>
+                            </li>
+
+                        </ul>
+
+                    </li>
+                    <li class="cat-item show"><a href="/">Tags más populares</a>
+
+                        <ul class="children show">
+
+                            {% load app_tags %}
+                            {% get_popular_tags 10 as popular_tags %}
+
+                            {% for tag in popular_tags %}
+
+                                <li class="cat-item"><a href="/list/?tags={{ tag }}">{{ tag }}</a></li>
+
+                            {% endfor %}
+
+                        </ul>
+
+                    </li>
+                    <li class="cat-item"><a href="/">Autores</a>
+
+                        <ul class="children">
+
+                            <li class="cat-item"><a href="#">Abel Puentes</a></li>
+                            <li class="cat-item"><a href="#">Andy Venet</a></li>
+                            <li class="cat-item"><a href="#">Ariel Hernández</a></li>
+                            <li class="cat-item"><a href="#">Yasser González</a></li>
+
+                        </ul>
+
+                    </li>
+
+                    {% block navigation %} {% endblock %}
+
+                </ul>
+
+                {% block sidebar %} {% endblock %}
+
+            </div>
+
+            <div id="content">
+
+                <div id="crumb">
+
+                    <ul><li><a href="/">TagFS </a></li> {% block crumb %} {% endblock %}</ul>
+
+                </div>
+
+                <div class="post_wrap">
+
+                    {% if active_tags %}
+
+                        <span class="tags">Tags activas:
+                            {% for tag in active_tags %}
+
+                                <a href="#">{{ tag }}</a>
+
+                            {% endfor %}
+                        </span>
+
+                    {% endif %}
+
+                    <div class="single" >
+
+                        <h2>{% block page_title %} {% endblock %}</h2>
+
+                        {% block content %} {% endblock %}
+
+                    </div>
+
+                </div>
+
+            </div>      
+
+        </div>    
+
+    </div>
+
+    <div id="footer_wrap">
+
+        <div id="footer">
+
+            <p>&copy 2010 TagFS <br> Sistema de Ficheros Distribuido</p>
+
+        </div>
+
+    </div>
+
 {% endblock %}

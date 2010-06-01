@@ -17,7 +17,7 @@ urlpatterns = patterns('',
     # (r'^admin/', include(admin.site.urls)),
     
     #App
-    (r'^$', include('app.urls')),
+    (r'^', include('app.urls')),
     
     #Media
     (r'^media/(?P<path>.*)$', serve, dict(document_root='../media/')),

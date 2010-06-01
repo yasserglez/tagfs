@@ -1,0 +1,40 @@
+﻿{% extends "index.html" %}
+
+{% block title %} Buscar ficheros {% endblock %}
+
+{% block page_title %} Buscar {% endblock %}
+
+{% block crumb %}
+
+    > <li>Buscar ficheros</li>
+
+{% endblock %}
+
+{% block content %}
+
+    <form action="" method="get">
+
+        {{ form_search.as_p }}
+
+        <input type="submit" name="submit" class="input_button" value="Buscar ficheros">
+
+    </form>
+
+    <ul>
+        <strong>Ficheros</strong>
+
+        {% for file_hash in files %}
+
+            {% load app_tags %}
+            {% get_file_info file_hash as file_info %}
+
+            <li><a href="/file/{{ file_hash }}">{{ file_info.name }}</a> - {{ file_info.size }} Kb</li>
+
+        {% endfor %}
+    </ul>
+
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}
