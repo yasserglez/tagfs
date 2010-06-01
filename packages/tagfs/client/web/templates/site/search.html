@@ -24,7 +24,7 @@
             {% load app_tags %}
             {% get_file_info file_hash as file_info %}
 
-            <li><a href="/get/{{ file_hash }}">{{ file_info.name }}</a> - {{ file_info.size }} Kb</li>
+            <li><a href="/file/{{ file_hash }}">{{ file_info.name }}</a> - {{ file_info.size }} Kb</li>
 
         {% endfor %}
     </ul>

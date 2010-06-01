@@ -13,6 +13,7 @@ ALL_TAGS_TEMPLATE = 'site/all_tags.html'
 LIST_TEMPLATE = 'site/list.html'
 SEARCH_TEMPLATE = 'site/search.html'
 PUT_TEMPLATE = 'site/put.html'
+FILE_INFO_TEMPLATE = 'site/file_info.html'
 
 CLIENT =  settings.TAGFSCLIENT
 
@@ -84,4 +85,13 @@ def put(request):
                                         context_instance=RequestContext(request))
     return render_to_response(PUT_TEMPLATE,
                                 {'form_put': form.as_p()},
+                                context_instance=RequestContext(request))
+
+
+def file_info(request, file_hash):
+    """
+    Muestra todos los datos del fichero.
+    """
+    return render_to_response(FILE_INFO_TEMPLATE,
+                                {'file_info': CLIENT.info(file_hash)},
                                 context_instance=RequestContext(request))

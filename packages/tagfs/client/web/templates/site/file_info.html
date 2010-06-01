@@ -1,0 +1,34 @@
+﻿{% extends "index.html" %}
+
+{% block title %} {{ file_info.name }} {% endblock %}
+
+{% block crumb %}
+
+    -> <li><a href="/get/{{ file_info.hash }}">{{ file_info.name }}</a></li>
+
+{% endblock %}
+
+{% block content %}
+
+    <h2>{{ file_info.name }}</h2>
+
+    <ul>
+
+        <li>
+            Tags:
+            {% for tag in file_info.tags %}
+                <a href="/list/?tags={{ tag }}">{{ tag }}</a>
+            {% endfor %}
+        </li>
+        <li>Descripción: {{ file_info.description }}</li>
+        <li>Tamaño: {{ file_info.size }}</li>
+        <br>
+        <a href="/get/{{ file_info.hash }}">Descargar fichero</a>
+
+    </ul>
+
+{% endblock %}
+
+{% block sidebar %}
+
+{% endblock %}
