@@ -9,10 +9,10 @@ class UploadForm(forms.Form):
     Form para subir los ficheros.
     """
     name            = forms.CharField(label='Nombre *', max_length=50)
-    description     = forms.CharField(label='Descripción *', widget=forms.Textarea, max_length=500)
+    description     = forms.CharField(label='Descripción', widget=forms.Textarea, max_length=500, required=False)
     tags            = forms.CharField(label='Tags *', max_length=50)
     data            = forms.FileField(label='Archivo *', widget=forms.FileInput)
-    replication     = forms.IntegerField(label='% de replicación', required=False)
+    replication     = forms.IntegerField(label='% de replicación', initial=25, required=False)
 
     def __unicode__(self):
         return self.name

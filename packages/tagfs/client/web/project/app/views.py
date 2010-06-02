@@ -81,6 +81,7 @@ def put(request):
             for tag in tags_cleaned.split():
                 tags.add(tag)
             data = data.read()
+            description = not description and 'Uploaded using the web client.' or description
             replication = not replication and 25 or replication
             save = CLIENT.put(name, description, tags, 'django', 'django', 775, data, replication)
             form = UploadForm()
