@@ -704,7 +704,7 @@ input, textarea {
     border:1px solid #dddddd;
 }
 table {
-  margin-bottom:20px;
+    margin: 10px;
 }
 thead td{
   background:#f0f0f0;

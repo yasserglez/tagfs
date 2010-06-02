@@ -23,14 +23,31 @@
     <ul>
         <strong>Ficheros</strong>
 
-        {% for file_hash in files %}
+        <table class="general_table" border="0" cellpadding="5" cellspacing="0" width="550">
+            <thead>
+                <tr>
+                    <td width="300"><strong>Name</strong></td>
+                    <td width="50"><strong>Size</strong></td>
+                    <td width="500"><strong>Description</strong></td>
+                </tr>
+            </thead>
+            <tbody>
+                {% load app_tags %}
+                {% for file_hash in files %}
 
-            {% load app_tags %}
-            {% get_file_info file_hash as file_info %}
+                    {% get_file_info file_hash as file_info %}
 
-            <li><a href="/file/{{ file_hash }}">{{ file_info.name }}</a> - {{ file_info.size }} Kb</li>
+                    <tr>
+                        <td><a href="/file/{{ file_hash }}">{{ file_info.name }}</a></td>
+                        <td>{{ file_info.size }}</td>
+                        <td>{{ file_info.description }}</td>
+                    </tr>
 
-        {% endfor %}
+                {% endfor %}
+
+            </tbody>
+        </table>
+
     </ul>
 
 {% endblock %}
