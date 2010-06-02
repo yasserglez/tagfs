@@ -42,9 +42,17 @@ def list_tags(request):
     for tag in get_tags.split():
         tags.add(tag)
     form = ListForm({'tags': get_tags})
+
+    files = CLIENT.list(tags)
+    files_tags = set()
+    for f in files:
+        file_info = CLIENT.info(f)
+        files_tags = files_tags.union(file_info['tags'])
+    files_tags = files_tags.difference(tags)
     return render_to_response(LIST_TEMPLATE,
-                                { 'form_list': form, 'files': CLIENT.list(tags),
-                                  'active_tags': tags, 'list_tags': True },
+                                { 'form_list': form, 'files': files,
+                                  'active_tags': tags, 'tags': files_tags,
+                                  'list_tags': True },
                                 context_instance=RequestContext(request))
 
 
