@@ -19,6 +19,7 @@ import Pyro.core
 import Zeroconf
 
 from tagfs.common import ZEROCONF_SERVICE_TYPE
+from tagfs.common.timeprovider import LocalTimeProvider
 
 
 class RemoteTagFSServer(object):
@@ -26,7 +27,7 @@ class RemoteTagFSServer(object):
     Servidor TagFS compartido en la red utilizando Pyro. 
     """
 
-    def __init__(self,  address, data_dir, capacity):
+    def __init__(self,  address, data_dir, capacity, ntp_server = None):
         """
         Inicializa una instancia de un servidor TagFS compartido en la red.
         
@@ -57,6 +58,11 @@ class RemoteTagFSServer(object):
         # Keep this last! This requires the index, locks, etc.
         self._sync_thread = threading.Thread(target=self._sync_servers)
         self._sync_thread.start()
+        # TODO Change to use ntp or local.
+        if ntp_server:
+            pass
+        else:
+            self._time_provider = LocalTimeProvider()
         
     def _init_index(self):
         """
@@ -77,6 +83,8 @@ class RemoteTagFSServer(object):
             size=whoosh.fields.STORED(),
             path=whoosh.fields.STORED(),
             type=whoosh.fields.STORED(),
+            time=whoosh.fields.STORED(),
+            action=whoosh.fields.STORED(),
         )
         index_dir = os.path.join(self._data_dir, 'index')
         if not os.path.isdir(index_dir):
@@ -88,7 +96,7 @@ class RemoteTagFSServer(object):
     def _init_files(self):
         """
         Inicializa el directorio que contiene los archivos almacenados 
-        en este servidor de TagFS. Los archivos no se almacenarán directamente
+        en este servidor de TagFS. time.mktime(time.gmtime())Los archivos no se almacenarán directamente
         en la raíz de este directorio sino en un serie de directorios anidados
         para evitar que este directorio tenga muchas entradas y se haga
         muy lento el acceso a un archivo.
@@ -277,6 +285,8 @@ class RemoteTagFSServer(object):
                 perms=file_info['perms'].decode(self._encoding),
                 path=file_path.decode(self._encoding),
                 type=magic.whatis(file_data),
+                time=str(self._time_provider.get_time()).decode(self._encoding),
+                action=u'add'                
             )               
             writer.commit()
     
@@ -307,6 +317,11 @@ class RemoteTagFSServer(object):
                 # Remove the metadata of the file from the index.
                 writer = self._index.writer()
                 writer.delete_by_term('hash', file_hash.decode(self._encoding))
+                writer.add_document(
+                    hash=file_hash.decode(self._encoding),
+                    time=self._time_provider.get_time(),
+                    action=u'delete'                
+                )
                 writer.commit()
 
                 # Update the empty space in this server.
@@ -387,6 +402,7 @@ class RemoteTagFSServer(object):
                 info['owner'] = doc['owner']
                 info['group'] = doc['group']
                 info['perms'] = doc['perms']
+                info['time']=time.gmtime(float(doc['time']))
                 return info
             else:
                 return None
