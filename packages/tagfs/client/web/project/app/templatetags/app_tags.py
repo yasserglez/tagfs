@@ -19,6 +19,20 @@ class PopularTagsNode(template.Node):
         return ''
 
 
+class FilesCountNode(template.Node):
+    def __init__(self, tag, context_var):
+        self.tag = tag
+        self.context_var = context_var
+
+    def render(self, context):
+        try:
+            tag = template.resolve_variable(self.tag, context)
+        except template.VariableDoesNotExist:
+            return ''
+        context[self.context_var] = len(CLIENT.list(set([tag])))
+        return ''
+
+
 class FileInfoNode(template.Node):
     def __init__(self, file_hash, context_var):
         self.file_hash = file_hash
@@ -48,6 +62,21 @@ def do_get_popular_tags(parser, token):
         raise template.TemplateSyntaxError("second argument to '%s' tag must be 'as'" % bits[0])
     return PopularTagsNode(bits[1], bits[3])
 
+def do_get_files_count(parser, token):
+    """
+    Retrieves the files count of a tag.
+
+    Example usage::
+
+        {% get_files_count tag as count %}
+    """
+    bits = token.contents.split()
+    if len(bits) != 4:
+        raise template.TemplateSyntaxError("'%s' tag takes exactly three arguments" % bits[0])
+    if bits[2] != 'as':
+        raise template.TemplateSyntaxError("second argument to '%s' tag must be 'as'" % bits[0])
+    return FilesCountNode(bits[1], bits[3])
+
 def do_get_file_info(parser, token):
     """
     Retrieves the file info.
@@ -65,4 +94,5 @@ def do_get_file_info(parser, token):
 
 
 register.tag('get_popular_tags', do_get_popular_tags)
+register.tag('get_files_count', do_get_files_count)
 register.tag('get_file_info', do_get_file_info)

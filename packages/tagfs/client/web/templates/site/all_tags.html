@@ -24,9 +24,11 @@
             {% load app_tags %}
             {% for tag in tags %}
 
+                {% get_files_count tag as count %}
+
                 <tr>
                     <td><a href="/list/?tags={{ tag }}">{{ tag }}</a></td>
-                    <td>0</td>
+                    <td>{{ count }}</td>
                 </tr>
 
             {% endfor %}
