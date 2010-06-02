@@ -142,14 +142,14 @@ h4 {
 /* Header */
 #header_wrap {
     position: relative;
-    height: 202px;
+    height: 144px;
     min-width: 900px;
     z-index: 99;
     padding: 0 10px;
 }
 #header {
     position: relative;
-    height: 202px;
+    height: 144px;
     width: 900px;
     margin: 0 auto;
 }
@@ -165,7 +165,7 @@ h4 {
 #search_wrap {
     position: absolute;
     right: 10px;
-    top: 15px;
+    top: 90px;
 }
 #search_wrap #s {
     background: #fefefe;
@@ -200,15 +200,15 @@ h4 {
 /* page */
 #page_wrap {
     position: relative;
-    background: #fff;
     min-width: 900px;
-    padding: 10px;
+    padding: 0 10px;
 }
 #page {
     position: relative;
     width: 900px;
     margin: 0 auto;
     padding: 25px 0px;
+    background: #fff;
 }
 /* Page Navigation */
 #header .navigation {
