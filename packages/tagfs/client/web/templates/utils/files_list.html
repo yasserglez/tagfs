@@ -1,0 +1,24 @@
+﻿        <table class="general_table" border="0" cellpadding="5" cellspacing="0" width="550">
+            <thead>
+                <tr>
+                    <td width="300"><strong>Nombre</strong></td>
+                    <td width="100"><strong>Tamaño</strong></td>
+                    <td width="500"><strong>Descripción</strong></td>
+                </tr>
+            </thead>
+            <tbody>
+                {% load app_tags %}
+                {% for file_hash in files %}
+
+                    {% get_file_info file_hash as file_info %}
+
+                    <tr>
+                        <td><a href="/file/{{ file_hash }}">{{ file_info.name }}</a></td>
+                        <td>{{ file_info.size }}</td>
+                        <td>{{ file_info.description }}</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
