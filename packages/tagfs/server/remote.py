@@ -194,13 +194,85 @@ class RemoteTagFSServer(object):
             with self._servers_mutex:
                 self._mrsw_lock.write_in()
                 try:
-                    # TODO: Synchronize the servers here!
-                    pass
+                    searcher = self._index.searcher()
+                    reader = self._index.reader()
+                    for hash in reader.lexicon('hash'):
+                        action = self.action(hash, True)
+                        best_server = None
+                        best_action = None
+                        for server in self._servers.itervalues():
+                            server_action = server.action(hash)
+                            if server_action[1] > action[1]:
+                                best_action = server_action
+                                best_server = server
+                        if best_action:
+                            if best_action[0] == 'delete':
+                                self.remove(hash, True)
+                            else:
+                                self._update_file(hash, best_server, True)                                                    
                 finally:
                     self._mrsw_lock.write_out()
             self._sync_cond.acquire()
             self._sync_cond.wait(sync_sleep)
             self._sync_cond.release()
+            
+    def _update_file(self, file_hash, server, safe=False):
+        """
+        Actualiza un fichero existente en este servidor.
+        
+        Actualiza un fichero almacenado en este servidor por el fichero 
+        identificado por el mismo hash en el servidor dado.
+        
+        @type file_hash: C{str}
+        @param file_hash: Identificador del archivo cuyos datos se quiere 
+            obtener. Este hash identifica al archivo únicamente dentro del 
+            sistema de ficheros distribuidos, a partir de sus etiquetas y 
+            su nombre.
+            
+        @type server: TODO
+        @param server: Servidor que contiene el fichero del que se va a 
+        actualizar el local.
+        
+        @type safe: C{bool}
+        @param safe: Expresa si la ejecución es "thread safe" o si el 
+            método se tiene que encargar de la sincronización. Es falso por
+            defecto
+        """
+        data = server.get(hash)
+        info = server.info(hash)
+        self.put(data, info, safe)
+            
+    def action(self, file_hash, safe=False):
+        """
+        Obtiene la última acción que se realizó sobre ese equipo.
+        
+        @type file_hash: C{str}
+        @param file_hash: Identificador del archivo cuyos datos se quiere 
+            obtener. Este hash identifica al archivo únicamente dentro del 
+            sistema de ficheros distribuidos, a partir de sus etiquetas y 
+            su nombre.
+            
+        @rtype: C{tuple}
+        @return: Tupla que contiene como primer valor la acción que se realizó 
+            sobre este y el identificador de tiempo en el que se realizó.
+            
+        @type safe: C{bool}
+        @param safe: Expresa si la ejecución es "thread safe" o si el 
+            método se tiene que encargar de la sincronización. Es falso por
+            defecto
+        """
+        if not safe:
+            self._mrsw_lock.read_in()
+        try:
+            searcher = self._index.searcher()
+            doc = searcher.document(hash=file_hash.decode(self._encoding))
+            if doc is not None:
+                return (doc['action'], doc['time'])
+            else:
+                return None
+        finally:
+            if not safe:
+                self._mrsw_lock.read_out()
         
     def status(self):
         """
@@ -218,7 +290,7 @@ class RemoteTagFSServer(object):
         finally:
             self._mrsw_lock.read_out()
         
-    def get(self, file_hash):
+    def get(self, file_hash, safe=False):
         """
         Obtiene el contenido del archivo identificado por C{file_hash}
         
@@ -232,21 +304,28 @@ class RemoteTagFSServer(object):
         @return: Contenido del archivo identificado por C{file_hash} si
             este archivo existe, C{None} si no hay almacenado en este
             servidor un archivo identificado por el hash dado.
+            
+        @type safe: C{bool}
+        @param safe: Expresa si la ejecución es "thread safe" o si el 
+            método se tiene que encargar de la sincronización. Es falso por
+            defecto
         """
-        self._mrsw_lock.read_in()
+        if not safe:
+            self._mrsw_lock.read_in()
         try:
             searcher = self._index.searcher()
             doc = searcher.document(hash=file_hash.decode(self._encoding))
-            if doc is not None:
+            if doc is not None and doc['action'] != 'delete':
                 file_path = os.path.join(self._files_dir, doc['path'])
                 with open(file_path, 'rb') as file:
                     return file.read()
             else:
                 return None
         finally:
-            self._mrsw_lock.read_out()
+            if not safe:
+                self._mrsw_lock.read_out()
         
-    def put(self, file_data, file_info):
+    def put(self, file_data, file_info, safe=False):
         """
         Almacena un nuevo archivo en este servidor del sistema de 
         archivos distribuidos.
@@ -255,9 +334,15 @@ class RemoteTagFSServer(object):
         @param file_data: Contenido del archivo que se quiere almacenar.
         
         @type file_info: C{dict}
-        @param file_info: Diccionario con los metadatos del archivo.         
+        @param file_info: Diccionario con los metadatos del archivo.
+        
+        @type safe: C{bool}
+        @param safe: Expresa si la ejecución es "thread safe" o si el 
+            método se tiene que encargar de la sincronización. Es falso por
+            defecto         
         """
-        self._mrsw_lock.write_in()
+        if not safe:
+            self._mrsw_lock.write_in()
         try:
             # Save the file in the files directory.
             file_name = file_info['name']
@@ -269,6 +354,12 @@ class RemoteTagFSServer(object):
                 os.makedirs(os.path.dirname(file_path))
             with open(file_path, 'w') as file:
                 file.write(file_data)
+                
+            mod_time =''
+            if not time in file_info:
+                mod_time = str(self._time_provider.get_time()).decode(self._encoding)
+            else:
+                mod_time = file_info['time'].decode(self._encoding)
     
             # Add the metadata of the file to the index.
             file_path = file_path[len(self._files_dir) + 1:]
@@ -285,7 +376,7 @@ class RemoteTagFSServer(object):
                 perms=file_info['perms'].decode(self._encoding),
                 path=file_path.decode(self._encoding),
                 type=magic.whatis(file_data),
-                time=str(self._time_provider.get_time()).decode(self._encoding),
+                time=mod_time,
                 action=u'add'                
             )               
             writer.commit()
@@ -293,9 +384,10 @@ class RemoteTagFSServer(object):
             # Update the empty space of this server.
             self._status['empty_space'] -= long(file_info['size'])
         finally:
-            self._mrsw_lock.write_out()
+            if not safe:
+                self._mrsw_lock.write_out()
         
-    def remove(self, file_hash):
+    def remove(self, file_hash, safe=False):
         """
         Elimina un archivo almacenado en este servidor. Si este servidor
         no tiene almacenado un archivo identificado con el hash dado
@@ -305,12 +397,18 @@ class RemoteTagFSServer(object):
         @param file_hash: Identificador del archivo que se quiere eliminar. 
             Este hash identifica al archivo únicamente dentro del sistema de 
             ficheros distribuido a partir de sus etiquetas y su nombre.
+            
+        @type safe: C{bool}
+        @param safe: Expresa si la ejecución es "thread safe" o si el 
+            método se tiene que encargar de la sincronización. Es falso por
+            defecto
         """
-        self._mrsw_lock.write_in()
+        if not safe:
+            self._mrsw_lock.write_in()
         try:
             searcher = self._index.searcher()
             doc = searcher.document(hash=file_hash.decode(self._encoding))
-            if doc is not None:                
+            if doc is not None and doc['action'] != 'delete':                
                 # Remove the file from the files directory.
                 os.remove(os.path.join(self._files_dir, doc['path']))
                 
@@ -327,7 +425,8 @@ class RemoteTagFSServer(object):
                 # Update the empty space in this server.
                 self._status['empty_space'] += long(doc['size'])
         finally:
-            self._mrsw_lock.write_out()
+            if not safe:
+                self._mrsw_lock.write_out()
         
     def list(self, tags):
         """
@@ -372,7 +471,7 @@ class RemoteTagFSServer(object):
         finally:
             self._mrsw_lock.read_out()
                                    
-    def info(self, file_hash):
+    def info(self, file_hash, safe=False):
         """
         Obtiene información a partir del hash de un archivo.
         
@@ -386,12 +485,18 @@ class RemoteTagFSServer(object):
         @return: Diccionario con los metadatos del archivo si este servidor
             tiene almacenado un archivo identificado por el hash dado,
             C{None} en caso contrario.
+        
+        @type safe: C{bool}
+        @param safe: Expresa si la ejecución es "thread safe" o si el 
+            método se tiene que encargar de la sincronización. Es falso por
+            defecto
         """
-        self._mrsw_lock.read_in()
+        if not safe:
+            self._mrsw_lock.read_in()
         try:
             searcher = self._index.searcher()
             doc = searcher.document(hash=file_hash.decode(self._encoding))
-            if doc is not None:
+            if doc is not None and doc['action'] != 'delete':
                 info = {}
                 info['hash'] = doc['hash']
                 info['tags'] = set(doc['tags'].split())
@@ -402,12 +507,13 @@ class RemoteTagFSServer(object):
                 info['owner'] = doc['owner']
                 info['group'] = doc['group']
                 info['perms'] = doc['perms']
-                info['time']=time.gmtime(float(doc['time']))
+                info['time']=doc['time']
                 return info
             else:
                 return None
         finally:
-            self._mrsw_lock.read_out()        
+            if not safe:
+                self._mrsw_lock.read_out()        
             
     def get_all_tags(self):
         """

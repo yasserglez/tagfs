@@ -237,7 +237,6 @@ class CLITagFSClient(TagFSClient):
             path_tags = self._get_tags(path)
         
         all_tags = self.get_all_tags()
-        
         if (path == '/' or 
             (len(self._empty_dirs) > 0 and 
              (path_tags - all_tags).issubset(self._empty_dirs))):
@@ -351,11 +350,12 @@ class CLITagFSClient(TagFSClient):
                 str_perms = '-'
                 for perm in (user_perms, group_perms, other_perms):
                     str_perms += perm_trans[perm]
-                mod_date = str_mod_date.format(year=str(info['time'].tm_year), 
-                            month=str(info['time'].tm_mon).rjust(2,'0'),
-                            day=str(info['time'].tm_mday).rjust(2,'0'))
-                mod_time = str_mod_time.format(hour=str(info['time'].tm_hour).rjust(2,'0'),
-                                minute=str(info['time'].tm_min).rjust(2,'0'))
+                mod_datetime = time.gmtime(float(info['time']))
+                mod_date = str_mod_date.format(year=str(mod_datetime.tm_year), 
+                                  month=str(mod_datetime.tm_mon).rjust(2,'0'),
+                                  day=str(mod_datetime.tm_mday).rjust(2,'0'))
+                mod_time = str_mod_time.format(hour=str(mod_datetime.tm_hour).rjust(2,'0'),
+                                minute=str(mod_datetime.tm_min).rjust(2,'0'))
                 item = (str_perms.rjust(10), info['owner'],
                         info['group'], info['size'], mod_date, 
                         mod_time, info['name'])
