@@ -387,6 +387,7 @@ class CLITagFSClient(TagFSClient):
         """
         error_msg = '{command}: {msg}.'
         error = None
+        infos = []
         path = ""
         name = ""
         all_tags = self.get_all_tags()
@@ -395,7 +396,7 @@ class CLITagFSClient(TagFSClient):
             error += '\nTry "help {command}" for more information.'.format(command='file')
         else:
             path = self._get_absolute(args[0])
-            
+
         if not error and path.endswith('/'):
                 name = path[:-1][path.rfind('/')+1:]
         elif not error:
@@ -414,8 +415,8 @@ class CLITagFSClient(TagFSClient):
             if not infos:
                 error = error_msg.format(command='file', 
                                          msg='"{0}": No such file or directory'.format(name))
-        elif not error:
-            printed = False 
+        if not error:
+            printed = False
             for info in infos:
                 if info['name'] == name:
                     print '{name} : {type}.'.format(name=name, type=info['type'])
