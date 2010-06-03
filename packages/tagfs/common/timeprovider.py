@@ -1,31 +1,33 @@
 # -*- coding: utf-8 -*-
 
 """
-Código común para la implementación del cliente y el servidor de TagFS.
+Clases representando una forma de obtener la fecha y hora actual.
 """
+
 import time
+
 
 class TimeProvider(object):
     """
+    Representanda una forma de obtener la fecha y hora actual.
     """
     
     def get_time(self):
         """
-        Retorna un identificador del tiempo actual GM.
+        Retorna un identificador del tiempo actual en GMT.
         
         @rtype: C{float}
-        @return: Retorna la cantidad de segundos transcurridos desde la "epoca"
-            del sistema.
+        @return: Cantidad de segundos transcurridos desde la epoca.
         """
-        
+
+
 class LocalTimeProvider(TimeProvider):
     """
-    Proveedor de tiempo local. 
-    Basado en el reloj local del sistema.
+    Permite obtener la fecha y hora actual, basado en el reloj local del sistema.
     """
     
     def get_time(self):
         """
+        Retorna un identificador del tiempo actual en GMT.
         """
         return float(time.mktime(time.gmtime()))
-    

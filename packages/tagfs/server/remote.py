@@ -27,7 +27,7 @@ class RemoteTagFSServer(object):
     Servidor TagFS compartido en la red utilizando Pyro. 
     """
 
-    def __init__(self,  address, data_dir, capacity, ntp_server = None):
+    def __init__(self,  address, data_dir, capacity, pyro_uri, ntp_server=None):
         """
         Inicializa una instancia de un servidor TagFS compartido en la red.
         
@@ -45,11 +45,19 @@ class RemoteTagFSServer(object):
             TagFS garantizará que la capacidad utilizada por todos los
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.
+            
+        @type pyro_uri: C{str}
+        @param pyro_uri: URI de PyRO correspondiente a este servidor.
+        
+        @type ntp_server: C{str}
+        @para ntp_server: Host del servidor NTP que se utilizará para obtener
+            el tiempo durante el proceso de sincronización de los servidores.
         """
         self._address = address
         self._data_dir = data_dir
         if not os.path.isdir(self._data_dir):
             os.mkdir(self._data_dir)
+        self._pyro_uri = pyro_uri
         self._init_index()
         self._init_files()
         self._init_status(capacity)
@@ -58,7 +66,7 @@ class RemoteTagFSServer(object):
         # Keep this last! This requires the index, locks, etc.
         self._sync_thread = threading.Thread(target=self._sync_servers)
         self._sync_thread.start()
-        # TODO Change to use ntp or local.
+        # TODO Change to use an NTP or local.
         if ntp_server:
             pass
         else:
@@ -158,10 +166,11 @@ class RemoteTagFSServer(object):
         @param service_name: Nombre completamente calificado del nombre 
             del servicio que fue descubierto.
         """
-        with self._servers_mutex:
-            pyro_uri = service_name[:-(len(service_type) + 1)]
-            pyro_proxy = Pyro.core.getProxyForURI(pyro_uri)            
-            self._servers[pyro_uri] = pyro_proxy
+        pyro_uri = service_name[:-(len(service_type) + 1)]
+        if pyro_uri != self._pyro_uri:
+            with self._servers_mutex:
+                pyro_proxy = Pyro.core.getProxyForURI(pyro_uri)            
+                self._servers[pyro_uri] = pyro_proxy
         
     def _server_removed(self, zeroconf, service_type, service_name):
         """
@@ -179,15 +188,16 @@ class RemoteTagFSServer(object):
         @param service_name: Nombre completamente calificado del nombre 
             del servicio que fue descubierto.                    
         """
-        with self._servers_mutex:
-            pyro_uri = service_name[:-(len(service_type) + 1)]
-            del self._servers[pyro_uri]
+        pyro_uri = service_name[:-(len(service_type) + 1)]
+        if pyro_uri != self._pyro_uri:
+            with self._servers_mutex:
+                del self._servers[pyro_uri]
             
     def _sync_servers(self):
         """
         Método que garantiza la sincronización de los servidores.
         """
-        sync_sleep = 5 * 60 # seconds
+        sync_sleep = 30 # seconds
         self._sync_cond = threading.Condition()
         self._sync_continue = True
         while self._sync_continue:
@@ -201,10 +211,7 @@ class RemoteTagFSServer(object):
                         best_server = None
                         best_action = None
                         for server in self._servers.itervalues():
-                            # TODO remove self from servers list 
-                            #      and uncomment the follow line.
-                            #server_action = server.action(hash)
-                            server_action = None
+                            server_action = server.action(hash)
                             if server_action[1] > action[1]:
                                 best_action = server_action
                                 best_server = server
@@ -241,8 +248,8 @@ class RemoteTagFSServer(object):
             método se tiene que encargar de la sincronización. Es falso por
             defecto
         """
-        data = server.get(hash)
-        info = server.info(hash)
+        data = server.get(file_hash)
+        info = server.info(file_hash)
         self.put(data, info, safe)
             
     def action(self, file_hash, safe=False):
