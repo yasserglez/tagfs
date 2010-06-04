@@ -40,21 +40,36 @@ class TagFSServer(object):
         self._continue = True
         self._sleep_time = 1
         self._address = address
-        self._remote = RemoteTagFSServer(address, data_dir, capacity)
-        self._pyro_remote = Pyro.core.ObjBase()
-        self._pyro_remote.delegateTo(self._remote)
-        self.init_pyro()
+        self.init_pyro(address, data_dir, capacity)        
         self.init_autodiscovery()
 
-    def init_pyro(self):
+    def init_pyro(self, address, data_dir, capacity):
         """
         Inicializa el método utilizado para exportar las funcionalidades del 
         servidor TagFS a los clientes de la red.
+        
+        @type address: C{str}
+        @param address: Dirección IP de la interfaz donde debe escuchar esta
+           instancia del servidor de TagFS.
+           
+        @type data_dir: C{str}
+        @param data_dir: Ruta absoluta al directorio utilizado para almacenar
+            los archivos y otros datos relacionados con el funcionamiento
+            del servidor.
+            
+        @type capacity: C{int}
+        @param capacity: Capacidad de almacenamiento en bytes de este servidor.
+            TagFS garantizará que la capacidad utilizada por todos los
+            archivos almacenados en este servidor no sobrepasará esta
+            capacidad.        
         """
         Pyro.core.initServer()
+        self._pyro_remote = Pyro.core.ObjBase()
         self._daemon = Pyro.core.Daemon(host=self._address)
         self._pyro_uri = self._daemon.connect(self._pyro_remote, 'tagfs')
-        
+        self._remote = RemoteTagFSServer(address, data_dir, capacity, self._pyro_uri)
+        self._pyro_remote.delegateTo(self._remote)
+
     def init_autodiscovery(self):
         """
         Inicializa el descubrimiento automático de los servidores TagFS.

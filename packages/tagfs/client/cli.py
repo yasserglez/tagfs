@@ -6,6 +6,7 @@ Implementación de un cliente TagFS para la línea de comandos.
 
 import shlex
 import textwrap
+import time
 
 try:
     # Used by raw_input for history, if available.
@@ -236,7 +237,6 @@ class CLITagFSClient(TagFSClient):
             path_tags = self._get_tags(path)
         
         all_tags = self.get_all_tags()
-        
         if (path == '/' or 
             (len(self._empty_dirs) > 0 and 
              (path_tags - all_tags).issubset(self._empty_dirs))):
@@ -324,12 +324,20 @@ class CLITagFSClient(TagFSClient):
                     for tag in self._empty_dirs:
                         elements[tag] = (None, True)
         print 'total {0}'.format(len(elements))
-        msg = '{perms} {owner} {group} {size} {name}'
+        msg = '{perms} {owner} {group} {size} {date} {time} {name}'
         largest = [-1, -1, -1, -1, -1]
         items = []
+        now = time.gmtime()
         for name, (info, dir) in elements.items():
+            str_mod_date = '{year}-{month}-{day}'
+            str_mod_time = '{hour}:{minute}'
             if dir:
-                item = ('drwxr-xr-x', self._user, self._group, '0', name)
+                now_date = str_mod_date.format(year=str(now.tm_year),
+                                               month=str(now.tm_mon).rjust(2,'0'),
+                                               day=str(now.tm_mday).rjust(2,'0'))
+                now_time = str_mod_time.format(hour=str(now.tm_hour).rjust(2,'0'),
+                                               minute=str(now.tm_min).rjust(2,'0'))
+                item = ('drwxr-xr-x', self._user, self._group, '0', now_date, now_time, name)
             else:
                 perms = str(info['perms'])
                 user_perms = int(perms[0])
@@ -342,8 +350,15 @@ class CLITagFSClient(TagFSClient):
                 str_perms = '-'
                 for perm in (user_perms, group_perms, other_perms):
                     str_perms += perm_trans[perm]
+                mod_datetime = time.gmtime(float(info['time']))
+                mod_date = str_mod_date.format(year=str(mod_datetime.tm_year), 
+                                  month=str(mod_datetime.tm_mon).rjust(2,'0'),
+                                  day=str(mod_datetime.tm_mday).rjust(2,'0'))
+                mod_time = str_mod_time.format(hour=str(mod_datetime.tm_hour).rjust(2,'0'),
+                                minute=str(mod_datetime.tm_min).rjust(2,'0'))
                 item = (str_perms.rjust(10), info['owner'],
-                        info['group'], info['size'], info['name'])
+                        info['group'], info['size'], mod_date, 
+                        mod_time, info['name'])
             if len(item[0]) > largest[0]:
                 largest[0] = len(item[0])
             if len(item[1]) > largest[1]:
@@ -355,11 +370,13 @@ class CLITagFSClient(TagFSClient):
             if len(item[4]) > largest[4]:
                 largest[4] = len(item[4])
             items.append(item)
-        for perms, owner, group, size, name in items:
+        for perms, owner, group, size, mod_date, mod_time, name in items:
             print msg.format(perms=perms.rjust(largest[0]),
                              owner=owner.rjust(largest[1]),
                              group=group.rjust(largest[2]),
                              size=size.rjust(largest[3]),
+                             date=mod_date,
+                             time=mod_time,
                              name=name.rjust(largest[4]))
         
     def _command_file(self, args):
@@ -370,6 +387,7 @@ class CLITagFSClient(TagFSClient):
         """
         error_msg = '{command}: {msg}.'
         error = None
+        infos = []
         path = ""
         name = ""
         all_tags = self.get_all_tags()
@@ -378,7 +396,7 @@ class CLITagFSClient(TagFSClient):
             error += '\nTry "help {command}" for more information.'.format(command='file')
         else:
             path = self._get_absolute(args[0])
-            
+
         if not error and path.endswith('/'):
                 name = path[:-1][path.rfind('/')+1:]
         elif not error:
@@ -397,8 +415,8 @@ class CLITagFSClient(TagFSClient):
             if not infos:
                 error = error_msg.format(command='file', 
                                          msg='"{0}": No such file or directory'.format(name))
-        elif not error:
-            printed = False 
+        if not error:
+            printed = False
             for info in infos:
                 if info['name'] == name:
                     print '{name} : {type}.'.format(name=name, type=info['type'])
