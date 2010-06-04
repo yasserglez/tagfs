@@ -19,7 +19,7 @@ import Pyro.core
 import Zeroconf
 
 from tagfs.common import ZEROCONF_SERVICE_TYPE
-from tagfs.common.timeprovider import LocalTimeProvider
+from tagfs.common.timeprovider import LocalTimeProvider, NtpTimeProvider
 
 
 class RemoteTagFSServer(object):
@@ -68,7 +68,7 @@ class RemoteTagFSServer(object):
         self._sync_thread.start()
         # TODO Change to use an NTP or local.
         if ntp_server:
-            pass
+            self._time_provider = NtpTimeProvider()
         else:
             self._time_provider = LocalTimeProvider()
         
