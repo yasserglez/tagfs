@@ -54,7 +54,9 @@ def _parse_args(argv):
                            'optionally followed by a K, M or G suffix (default: %default)')
     parser.add_option('-r', '--replication', action='store', dest='replication', type='int', metavar='PERCENTAGE',
                       help='the replication percentage to be used during this ' \
-                           'session of the TagFS client (default: %default)')    
+                           'session of the TagFS client (default: %default)')
+    parser.add_option('-t', '--time-server', action='store', dest='ntp_server', type='string', metavar='SERVER', 
+                      help='sets the NTP server to be used during synchronization (not required)')       
     parser.set_default('capacity', '1G')        
     parser.set_default('replication', 25)
     options, args = parser.parse_args(args=argv[1:])
@@ -91,8 +93,8 @@ def main(argv):
         del programa y 1 en el caso contrario.
     """
     options, args = _parse_args(argv)   
-    client = CLITagFSClient(options.address, options.data_dir, 
-                            options.capacity, options.replication)
+    client = CLITagFSClient(options.address, options.data_dir, options.capacity, 
+                            options.replication, options.ntp_server)
     client.start()
     return EXIT_SUCCESS
 
