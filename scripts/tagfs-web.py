@@ -37,11 +37,10 @@ def main():
     addrport = get_usable_addrport(port_start=8000)
     manage_script = os.path.join(os.path.dirname(__file__), os.pardir, 'packages/tagfs/client/web/project/manage.py')
     server_args = (sys.executable, os.path.abspath(manage_script), 'runserver', str(addrport))
-    print server_args
     server_process = subprocess.Popen(server_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print 'TagFs is running. You can stop TagFs using CONTROL-C.'
     # Wait for the Django server to start. Sleep 1 second.
-    time.sleep(1)
+    time.sleep(5)
     # Open the web browser.
     root_url = 'http://localhost:%s/' % addrport
     open_browser(root_url)
