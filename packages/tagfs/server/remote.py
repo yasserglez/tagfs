@@ -212,7 +212,8 @@ class RemoteTagFSServer(object):
                         best_action = None
                         for server in self._servers.itervalues():
                             server_action = server.action(hash)
-                            if server_action[1] > action[1]:
+                            if (server_action and 
+                                server_action[1] > action[1]):
                                 best_action = server_action
                                 best_server = server
                         if best_action:
