@@ -53,6 +53,8 @@ def _parse_args(argv):
     parser.add_option('-c', '--capacity', action='store', dest='capacity', type='string', metavar='CAPACITY', 
                       help='sets the storage capacity of this TagFS server in bytes ' \
                            'optionally followed by a K, M or G suffix (default: %default)')
+    parser.add_option('-t', '--time-server', action='store', dest='ntp_server', type='string', metavar='SERVER', 
+                      help='sets the NTP server to be used during synchronization (not required)')    
     parser.set_default('capacity', '1G')
     options, args = parser.parse_args(args=argv[1:])
     if not options.address:
@@ -86,7 +88,7 @@ def main(argv):
         del programa y 1 en el caso contrario.
     """
     options, args = _parse_args(argv)
-    server = TagFSServer(options.address, options.data_dir, options.capacity)
+    server = TagFSServer(options.address, options.data_dir, options.capacity, options.ntp_server)
     server.start()
     return EXIT_SUCCESS
 

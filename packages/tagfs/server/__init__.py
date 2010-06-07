@@ -18,7 +18,7 @@ class TagFSServer(object):
     Servidor de TagFS.
     """
     
-    def __init__(self, address, data_dir, capacity):
+    def __init__(self, address, data_dir, capacity, ntp_server=None):
         """
         Inicializa una instancia de un servidor de TagFS.
         
@@ -36,14 +36,20 @@ class TagFSServer(object):
             TagFS garantizará que la capacidad utilizada por todos los
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.
+            
+        @type ntp_server: C{str}
+        @para ntp_server: Host del servidor NTP que se utilizará para obtener
+            el tiempo durante el proceso de sincronización de los servidores.
+            Si no se especifica este parámetro el servidor utilizará la hora
+            del sistema durante la sincronización.
         """
         self._continue = True
         self._sleep_time = 1
         self._address = address
-        self.init_pyro(address, data_dir, capacity)        
+        self.init_pyro(address, data_dir, capacity, ntp_server)
         self.init_autodiscovery()
 
-    def init_pyro(self, address, data_dir, capacity):
+    def init_pyro(self, address, data_dir, capacity, ntp_server):
         """
         Inicializa el método utilizado para exportar las funcionalidades del 
         servidor TagFS a los clientes de la red.
@@ -61,13 +67,17 @@ class TagFSServer(object):
         @param capacity: Capacidad de almacenamiento en bytes de este servidor.
             TagFS garantizará que la capacidad utilizada por todos los
             archivos almacenados en este servidor no sobrepasará esta
-            capacidad.        
+            capacidad.
+            
+        @type ntp_server: C{str}
+        @para ntp_server: Host del servidor NTP que se utilizará para obtener
+            el tiempo durante el proceso de sincronización de los servidores.
         """
         Pyro.core.initServer()
         self._pyro_remote = Pyro.core.ObjBase()
         self._daemon = Pyro.core.Daemon(host=self._address)
         self._pyro_uri = self._daemon.connect(self._pyro_remote, 'tagfs')
-        self._remote = RemoteTagFSServer(address, data_dir, capacity, self._pyro_uri)
+        self._remote = RemoteTagFSServer(address, data_dir, capacity, self._pyro_uri, ntp_server)
         self._pyro_remote.delegateTo(self._remote)
 
     def init_autodiscovery(self):
@@ -80,7 +90,7 @@ class TagFSServer(object):
                                                       socket.inet_aton(self._daemon.hostname),
                                                       self._daemon.port, 0, 0, {})
         self._zeroconf.registerService(self._zeroconf_service)
-        
+
     def start(self):
         """
         Inicia el ciclo principal del servidor TagFS.
@@ -96,7 +106,7 @@ class TagFSServer(object):
         self._daemon.shutdown()
         self._zeroconf.unregisterService(self._zeroconf_service)
         self._zeroconf.close()
-        
+
     def stop(self):
         """
         Detiene el ciclo principal del servidor TagFS.
