@@ -19,7 +19,7 @@ class TagFSClient(object):
     Clase base de los clientes de TagFS.
     """
     
-    def __init__(self, address, data_dir, capacity):
+    def __init__(self, address, data_dir, capacity, ntp_server=None):
         """
         Inicializa una instancia de un cliente TagFS.
         
@@ -38,10 +38,17 @@ class TagFSClient(object):
             TagFS garantizará que la capacidad utilizada por todos los
             archivos almacenados en este servidor no sobrepasará esta
             capacidad.  
+            
+        @type ntp_server: C{str}
+        @para ntp_server: Host del servidor NTP que se utilizará para obtener
+            el tiempo durante el proceso de sincronización de los servidores.
+            Si no se especifica este parámetro el servidor utilizará la hora
+            del sistema durante la sincronización.             
         """
         self._address = address
         self._data_dir = data_dir
         self._capacity = capacity
+        self._ntp_server = ntp_server
         self.init_server()
         self.init_autodiscovery()
         
@@ -49,7 +56,7 @@ class TagFSClient(object):
         """
         Inicializa el servidor ejecutado por este cliente.
         """
-        self._server = TagFSServer(self._address, self._data_dir, self._capacity)
+        self._server = TagFSServer(self._address, self._data_dir, self._capacity, self._ntp_server)
         self._server_thread = threading.Thread(target=self._server.start)
         self._server_thread.start()
         
