@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import os
@@ -39,7 +39,7 @@ def main():
     server_args = (sys.executable, os.path.abspath(manage_script), 'runserver', str(addrport))
     server_process = subprocess.Popen(server_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print 'TagFs is running. You can stop TagFs using CONTROL-C.'
-    # Wait for the Django server to start. Sleep 1 second.
+    # Wait for the Django server to start.
     time.sleep(5)
     # Open the web browser.
     root_url = 'http://localhost:%s/' % addrport
