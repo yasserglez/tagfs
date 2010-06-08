@@ -115,7 +115,10 @@ def get(request, file_hash):
     """
     Devuelve el fichero para descargar.
     """
-    return HttpResponse(CLIENT.get(file_hash), content_type='plain/text')
+    file_info = CLIENT.info(file_hash)
+    response = HttpResponse(CLIENT.get(file_hash), mimetype=file_info['type'])
+    response['Content-Disposition'] = 'attachment; filename=%s' % (file_info['name'])
+    return response
 
 def remove(request, file_hash):
     """
