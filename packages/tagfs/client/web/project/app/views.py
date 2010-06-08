@@ -28,8 +28,11 @@ def all_tags(request):
     """
     Muestra todos los tags del sistema.
     """
+    tags = CLIENT.get_all_tags()
+    tags = list(tags)
+    tags.sort()
     return render_to_response(ALL_TAGS_TEMPLATE,
-                                { 'tags': CLIENT.get_all_tags(), 'all_tags': True },
+                                { 'tags': tags, 'all_tags': True },
                                 context_instance=RequestContext(request))
 
 
@@ -42,6 +45,8 @@ def list_tags(request):
     for tag in get_tags.split():
         tags.add(tag)
     form = ListForm({'tags': get_tags})
+    tags = list(tags)
+    tags.sort()
 
     files = CLIENT.list(tags)
     files_tags = set()
@@ -49,6 +54,8 @@ def list_tags(request):
         file_info = CLIENT.info(f)
         files_tags = files_tags.union(file_info['tags'])
     files_tags = files_tags.difference(tags)
+    files_tags = list(files_tags)
+    files_tags.sort()
     return render_to_response(LIST_TEMPLATE,
                                 { 'form_list': form, 'files': files,
                                   'active_tags': tags, 'tags': files_tags,
