@@ -112,7 +112,7 @@
                         <span class="tags">Tags activas:
                             {% for tag in active_tags %}
 
-                                <a href="#">{{ tag }}</a>
+                                <a href="/list/?tags={% for active in active_tags %}{% ifequal tag active %}{% else %}{{ active }}&nbsp;{% endifequal %}{% endfor %}">{{ tag }}</a>
 
                             {% endfor %}
                         </span>

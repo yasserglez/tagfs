@@ -27,7 +27,29 @@
 
         <strong>Tags</strong>
 
-        {% include "utils/tags_list.html" %}
+        <table class="general_table" border="0" cellpadding="5" cellspacing="0" width="550">
+            <thead>
+                <tr>
+                    <td width="300"><strong>Nombre</strong></td>
+                    <td width="100"><strong>Ficheros</strong></td>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% load app_tags %}
+                {% for tag in tags %}
+
+                    {% get_files_count tag as count %}
+
+                    <tr>
+                        <td><a href="/list/?tags={% for tag in active_tags %}{{ tag }}&nbsp;{% endfor %}{{ tag }}">{{ tag }}</a></td>
+                        <td>{{ count }}</td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+        </table>
 
     </ul>
 
