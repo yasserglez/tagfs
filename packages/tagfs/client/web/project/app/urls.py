@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 
-from views import home, all_tags, list_tags, search, put, file_info, get, remove
+from views import home, all_tags, list_tags, search, put, edit, file_info, get, remove
 
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
@@ -34,6 +34,9 @@ urlpatterns = patterns('',
 
     #File
     (r'^file/(?P<file_hash>\w+)$', file_info),
+
+    #Edit
+    (r'^edit/(?P<file_hash>\w+)$', edit),
 
     #Get
     (r'^get/(?P<file_hash>\w+)$', get),

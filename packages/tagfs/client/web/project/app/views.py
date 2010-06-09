@@ -7,7 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from forms import UploadForm, ListForm, SearchForm
+from forms import EditForm, UploadForm, ListForm, SearchForm
 
 HOME_TEMPLATE = 'site/home.html'
 ALL_TAGS_TEMPLATE = 'site/all_tags.html'
@@ -98,7 +98,8 @@ def put(request):
             data = data.read()
             description = not description and 'Uploaded using the web client.' or description
             replication = not replication and 25 or replication
-            save = CLIENT.put(name, description, tags, 'django', 'django', 775, data, replication)
+
+            save = CLIENT.put(name, description, tags, 'tagfs', 'tagfs', 775, data, replication)
             form = UploadForm()
             return render_to_response(PUT_TEMPLATE,
                                         {'form_put': form.as_p(), 'save': save,
@@ -106,6 +107,45 @@ def put(request):
                                         context_instance=RequestContext(request))
     return render_to_response(PUT_TEMPLATE,
                                 {'form_put': form.as_p(), 'put': True},
+                                context_instance=RequestContext(request))
+
+
+def edit(request, file_hash):
+    """
+    Se ocupa de editar un fichero en tagfs,
+    verificando que se cumplen todos los requisitos del form.
+    """
+    file_info = CLIENT.info(file_hash)
+    file_info['tags'] = ' '.join(file_info['tags'])
+    form = EditForm(file_info)
+
+    if request.method == 'POST':
+        form = EditForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            description = form.cleaned_data['description']
+            tags_cleaned = form.cleaned_data['tags']
+
+            file_info['name'] = name
+            file_info['description'] = description
+            file_info['tags_cleaned'] = tags_cleaned
+
+            tags = set()
+            for tag in tags_cleaned.split():
+                tags.add(tag)
+            description = not description and 'Uploaded using the web client.' or description
+            replication = 25
+            data = CLIENT.get(file_hash)
+
+            CLIENT.remove(file_hash)
+            save = CLIENT.put(name, description, tags, 'tagfs', 'tagfs', 775, data, replication)
+
+            form = EditForm(file_info)
+            return render_to_response(PUT_TEMPLATE,
+                                        {'form_put': form.as_p(), 'save': save},
+                                        context_instance=RequestContext(request))
+    return render_to_response(PUT_TEMPLATE,
+                                {'form_put': form.as_p()},
                                 context_instance=RequestContext(request))
 
 
@@ -126,6 +166,7 @@ def get(request, file_hash):
     response = HttpResponse(CLIENT.get(file_hash), mimetype=file_info['type'])
     response['Content-Disposition'] = 'attachment; filename=%s' % (file_info['name'])
     return response
+
 
 def remove(request, file_hash):
     """
