@@ -11,8 +11,8 @@ import sys
 __version__ = '0.1'
 
 __authors__ = (
-    'Abel Puentes Luberta <abelchino@lab.matcom.uh.cu>',
-    'Andy Venet Pompa <vangelis@lab.matcom.uh.cu>',
-    'Ariel Hernández Amador <gnuaha7@uh.cu>',
-    'Yasser González Fernández <yglez@uh.cu>',
+    'Abel Puentes Luberta <abelpuentes@gmail.com>',
+    'Andy Venet Pompa <andy.venet@gmail.com>',
+    'Ariel Hernández Amador <gnuaha7@gmail.com>',
+    'Yasser González Fernández <ygonzalezfernandez@gmail.com>',
 )
