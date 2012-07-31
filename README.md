@@ -4,7 +4,7 @@ TagFS is a tag-based distributed filesystem. The project was created by [Abel Pu
 
 [abelpuentes]: <mailto:abelpuentes@gmail.com>
                "Abel Puentes Luberta's Email"
-[andy.venet]: <mailto:gnuaha7@gmail.com>
+[andy.venet]: <mailto:andy.venet@gmail.com>
               "Andy Venet Pompa's Email"
 [gnuaha7]: <mailto:gnuaha7@gmail.com>
            "Ariel Hernández Amador's Email"
